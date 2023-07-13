@@ -14,6 +14,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as backend_version_history from "../backend_version_history";
 import type * as ingest_github from "../ingest_github";
 import type * as messages from "../messages";
 
@@ -26,6 +27,7 @@ import type * as messages from "../messages";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  backend_version_history: typeof backend_version_history;
   ingest_github: typeof ingest_github;
   messages: typeof messages;
 }>;
