@@ -1,6 +1,5 @@
 import os
 import subprocess
-from pprint import pprint
 
 from dotenv import load_dotenv
 
@@ -29,7 +28,5 @@ for line in result.stdout.decode("utf-8").strip().split("\n"):
             "url": parts[3],
         }
     )
-rows = list(reversed(rows))
-
-pprint(rows)
 convex_client.mutation("backend_version_history:upload", {"rows": rows})
+print("Completed successfully")
