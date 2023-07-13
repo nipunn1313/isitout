@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 
 export default function App() {
-  const messages = useQuery(api.messages.list) || [];
+  const messages = useQuery(api.backend_version_history.list) || [];
 
   const [newMessageText, setNewMessageText] = useState("");
   const sendMessage = useMutation(api.messages.send);
@@ -14,25 +14,25 @@ export default function App() {
     await sendMessage({ body: newMessageText, author: name });
     setNewMessageText("");
   }
+
   return (
     <main>
-      <h1>Convex Chat</h1>
+      <h1>isitout</h1>
       <p className="badge">
-        <span>{name}</span>
+        <span>Convex Backend Push History</span>
       </p>
       <ul>
-        {messages.map(message => (
-          <li key={message._id.toString()}>
-            <span>{message.author}:</span>
-            <span>{message.body}</span>
-            <span>{new Date(message._creationTime).toLocaleTimeString()}</span>
+        {messages.map((message) => (
+          <li key={message.pushDate.toString()}>
+            <a href={message.url}>{message.version}</a>
+            <span>{new Date(message.pushDate).toLocaleString()}</span>
           </li>
         ))}
       </ul>
       <form onSubmit={handleSendMessage}>
         <input
           value={newMessageText}
-          onChange={event => setNewMessageText(event.target.value)}
+          onChange={(event) => setNewMessageText(event.target.value)}
           placeholder="Write a message…"
         />
         <input type="submit" value="Send" disabled={!newMessageText} />

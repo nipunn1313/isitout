@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 export const upload = mutation(async ({ db }, { rows }: { rows: any }) => {
   // First wipe
@@ -10,4 +10,8 @@ export const upload = mutation(async ({ db }, { rows }: { rows: any }) => {
   for (const row of rows) {
     db.insert("backend_version_history", row);
   }
+});
+
+export const list = query(async ({ db }) => {
+  return db.query("backend_version_history").collect();
 });

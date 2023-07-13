@@ -67,10 +67,6 @@ li span:nth-child(1) {
   white-space: nowrap;
 }
 li span:nth-child(2) {
-  margin-right: 4px;
-  word-break: break-word;
-}
-li span:nth-child(3) {
   color: #6c757d;
   margin-left: auto;
   white-space: nowrap;
