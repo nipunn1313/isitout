@@ -14,6 +14,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as ingest_github from "../ingest_github";
 import type * as messages from "../messages";
 
 /**
@@ -25,6 +26,7 @@ import type * as messages from "../messages";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  ingest_github: typeof ingest_github;
   messages: typeof messages;
 }>;
 export declare const api: FilterApi<
