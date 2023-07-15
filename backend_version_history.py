@@ -1,11 +1,15 @@
 import os
 import subprocess
+from datetime import datetime
 
 from dotenv import load_dotenv
 
 from convex import ConvexClient
 
-load_dotenv(".env.local")
+if os.environ.get("PROD"):
+    load_dotenv(".env")
+else:
+    load_dotenv(".env.local")
 CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)
 convex_client.set_debug(True)
@@ -29,4 +33,9 @@ for line in result.stdout.decode("utf-8").strip().split("\n"):
         }
     )
 convex_client.mutation("backend_version_history:upload", {"rows": rows})
+
+now = datetime.now().timestamp()
+print(now)
+convex_client.mutation("last_sync:update", {"time": now})
+
 print("Completed successfully")
