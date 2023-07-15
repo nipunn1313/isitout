@@ -16,6 +16,7 @@ import type {
 } from "convex/server";
 import type * as backend_version_history from "../backend_version_history";
 import type * as ingest_github from "../ingest_github";
+import type * as last_sync from "../last_sync";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -28,6 +29,7 @@ import type * as ingest_github from "../ingest_github";
 declare const fullApi: ApiFromModules<{
   backend_version_history: typeof backend_version_history;
   ingest_github: typeof ingest_github;
+  last_sync: typeof last_sync;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

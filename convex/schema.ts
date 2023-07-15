@@ -7,4 +7,7 @@ export default defineSchema({
     url: v.string(),
     version: v.string(),
   }),
+  last_sync: defineTable({
+    time: v.float64(),
+  }),
 });

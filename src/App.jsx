@@ -4,6 +4,8 @@ import { api } from "../convex/_generated/api";
 
 export default function App() {
   const messages = useQuery(api.backend_version_history.list) || [];
+  const lastSync = useQuery(api.last_sync.get) || "unknown";
+  const lastSyncTime = new Date(lastSync.time * 1000).toLocaleString();
 
   const [newMessageText, setNewMessageText] = useState("");
   const sendMessage = useMutation(api.messages.send);
@@ -19,7 +21,10 @@ export default function App() {
     <main>
       <h1>isitout</h1>
       <p className="badge">
-        <span>Convex Backend Push History</span>
+        <span>Backend Push Version History</span>
+      </p>
+      <p className="badge">
+        <span>Last sync: {lastSyncTime}</span>
       </p>
       <ul>
         {messages.map((message) => (
