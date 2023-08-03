@@ -59,7 +59,7 @@ export default function App() {
         <a href="https://grafana.cvx.is/d/aab19343-40fb-48fa-9774-e5301a70a2cd/versions?orgId=1&viewPanel=4">
           Backend Versions Plot »
         </a>{" "}
-        in make sure this version was rolled out.
+        to make sure this version was rolled out.
       </p>
       <pre className="note">
         big-brain-tool dump-instances --current-version 0.0.417 --name-only
