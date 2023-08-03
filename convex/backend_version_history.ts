@@ -13,5 +13,14 @@ export const upload = mutation(async ({ db }, { rows }: { rows: any }) => {
 });
 
 export const list = query(async ({ db }) => {
-  return db.query("backend_version_history").collect();
+  return (
+    await db
+      .query("backend_version_history")
+      .withIndex("pushDate")
+      .order("desc")
+      .collect()
+  ).map((row) => ({
+    ...row,
+    pushDate: +Date.parse(row.pushDate),
+  }));
 });
