@@ -6,7 +6,7 @@ export default defineSchema({
     pushDate: v.string(),
     url: v.string(),
     version: v.string(),
-  }),
+  }).index("pushDate", ["pushDate"]),
   last_sync: defineTable({
     time: v.float64(),
   }),
