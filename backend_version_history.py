@@ -11,8 +11,8 @@ if os.environ.get("PROD"):
 else:
     load_dotenv(".env.local")
 
-# Must match secret.js
-SECRET = "t3rjgJUPBU6FZ3XwV_882ZnHqGJPnnk.";
+SECRET = os.environ["BACKEND_HISTORY_SECRET"]
+assert SECRET
 
 CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)

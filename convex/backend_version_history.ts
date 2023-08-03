@@ -1,5 +1,6 @@
-import { secret as expectedSecret } from "../secret";
 import { mutation, query, QueryCtx } from "./_generated/server";
+
+const expectedSecret = process.env.BACKEND_HISTORY_SECRET;
 
 export const upload = mutation(
   async (ctx, { rows, secret }: { rows: any; secret: string }) => {
