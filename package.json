@@ -9,6 +9,7 @@
     "dev:init": "convex dev --until-success --run seed"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.2.0",
     "@octokit/rest": "^20.0.1",
     "convex": "^1.0.2",
     "date-fns": "^2.30.0",
