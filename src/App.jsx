@@ -1,9 +1,9 @@
-import { useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
+import {useQuery} from "convex/react";
+import {api} from "../convex/_generated/api";
 
-import { formatRFC7231, formatDistanceToNowStrict } from "date-fns";
+import {formatRFC7231, formatDistanceToNowStrict} from "date-fns";
 
-function PushTime({ d }) {
+function PushTime({d}) {
   return (
     <div className="push-time" title={formatRFC7231(d)}>
       <span>{d.toLocaleString()}</span>
@@ -11,7 +11,7 @@ function PushTime({ d }) {
   );
 }
 
-function Ago({ d }) {
+function Ago({d}) {
   return (
     <div className="ago">
       <span>{formatDistanceToNowStrict(d)} ago</span>
@@ -19,7 +19,7 @@ function Ago({ d }) {
   );
 }
 
-function Row({ message }) {
+function Row({message}) {
   const d = new Date(message.pushDate);
   const version = message.version;
   const parts = version.split(".").map((x) => parseInt(x));
@@ -52,7 +52,7 @@ export default function App() {
         <span>Last sync: {lastSyncTime}</span>
       </p>
       <p className="note">
-        List of when backend versions were <i>tagged</i>,
+        List of when backend versions were <i>canaried</i>,
         <br />
         check{" "}
         <a href="https://grafana.cvx.is/d/aab19343-40fb-48fa-9774-e5301a70a2cd/versions?orgId=1&viewPanel=4">
