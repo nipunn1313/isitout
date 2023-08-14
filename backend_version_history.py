@@ -19,7 +19,7 @@ convex_client = ConvexClient(CONVEX_URL)
 convex_client.set_debug(True)
 
 result = subprocess.run(
-    ["big-brain-tool", "backend-version-history", "-n", "100"],
+    ["/usr/local/bin/big-brain-tool", "backend-version-history", "-n", "100"],
     capture_output=True,
     check=True,
 )
@@ -37,7 +37,9 @@ for line in result.stdout.decode("utf-8").strip().split("\n"):
         }
     )
 
-convex_client.mutation("backend_version_history:upload", {"rows": rows, "secret": SECRET})
+convex_client.mutation(
+    "backend_version_history:upload", {"rows": rows, "secret": SECRET}
+)
 
 now = datetime.now().timestamp()
 print(now)
