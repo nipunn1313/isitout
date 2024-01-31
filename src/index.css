@@ -85,3 +85,20 @@ li:last-child {
 .note {
   text-align: center;
 }
+
+.LoginButton {
+  font-size: 96px;
+  padding: 10px;
+  border-radius: 50px;
+  color: white;
+  background-color: coral;
+  transition: .2s ease;
+}
+
+.LoginButton:hover {
+  color: coral;
+  background-color: white;
+  transform: scale(1.1);
+  border: 5px solid coral;
+}
+

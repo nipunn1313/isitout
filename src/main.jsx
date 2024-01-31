@@ -19,7 +19,15 @@ const convex = new ConvexReactClient(address);
 
 function LoginButton() {
   const { loginWithRedirect } = useAuth0();
-  return <button onClick={() => loginWithRedirect()}>Log in</button>;
+  return <div style={{
+    height: "100vh",
+    width: "100vw",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  }}>
+    <button className="LoginButton" onClick={() => loginWithRedirect()}>Log in</button>
+  </div>;
 }
 
 ReactDOM.render(
