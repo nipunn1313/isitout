@@ -20,7 +20,12 @@ convex_client.set_debug(True)
 
 service = "convex-backend"
 result = subprocess.run(
-    ["poetry", "run", "current-version", service],
+    [
+        os.path.expanduser("~/.local/bin/poetry"),
+        "run",
+        "current-version",
+        service,
+    ],
     cwd=os.path.expanduser("~/src/convex/ops/builder"),
     capture_output=True,
     check=True,
