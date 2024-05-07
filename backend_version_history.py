@@ -18,30 +18,43 @@ CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)
 convex_client.set_debug(True)
 
-service = "convex-backend"
-result = subprocess.run(
-    [
-        os.path.expanduser("~/.local/bin/poetry"),
-        "run",
-        "current-version",
-        service,
-    ],
-    cwd=os.path.expanduser("~/src/convex/ops/builder"),
-    capture_output=True,
-    check=True,
-)
+services = [
+    "convex-backend",
+    "big-brain",
+    "searchlight",
+    "funrun",
+    "load-generator",
+    "db-verifier",
+]
 
-line = result.stdout.decode("utf-8").strip()
-version = line.split(" ")[0]
+for service in services:
+    try:
+        result = subprocess.run(
+            [
+                os.path.expanduser("~/.local/bin/poetry"),
+                "run",
+                "current-version",
+                service,
+            ],
+            cwd=os.path.expanduser("~/src/convex/ops/builder"),
+            capture_output=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(e.stdout)
+        print(e.stderr)
 
-convex_client.mutation(
-    "version_history:addRow",
-    {
-        "version": version,
-        "service": service,
-        "secret": SECRET,
-    },
-)
+    line = result.stdout.decode("utf-8").strip()
+    version = line.split(" ")[0]
+
+    convex_client.mutation(
+        "version_history:addRow",
+        {
+            "version": version,
+            "service": service,
+            "secret": SECRET,
+        },
+    )
 
 now = datetime.now().timestamp()
 print(now)
