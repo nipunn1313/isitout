@@ -11,34 +11,31 @@ if os.environ.get("PROD"):
 else:
     load_dotenv(".env.local")
 
-SECRET = os.environ["BACKEND_HISTORY_SECRET"]
+SECRET = os.environ["ISITOUT_SECRET"]
 assert SECRET
 
 CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)
 convex_client.set_debug(True)
 
+service = "convex-backend"
 result = subprocess.run(
-    ["/usr/local/bin/big-brain-tool", "backend-version-history", "-n", "100"],
+    ["poetry", "run", "current-version", service],
+    cwd=os.path.expanduser("~/src/convex/ops/builder"),
     capture_output=True,
     check=True,
 )
 
-rows = []
-for line in result.stdout.decode("utf-8").strip().split("\n"):
-    parts = line.split("\t")
-    assert len(parts) == 4
-    assert parts[2] == ""
-    rows.append(
-        {
-            "pushDate": parts[0],
-            "version": parts[1],
-            "url": parts[3],
-        }
-    )
+line = result.stdout.decode("utf-8").strip()
+version = line.split(" ")[0]
 
 convex_client.mutation(
-    "backend_version_history:upload", {"rows": rows, "secret": SECRET}
+    "version_history:addRow",
+    {
+        "version": version,
+        "service": service,
+        "secret": SECRET,
+    },
 )
 
 now = datetime.now().timestamp()
