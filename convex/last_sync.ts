@@ -1,7 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { checkIdentity } from "./backend_version_history";
 
-const expectedSecret = process.env.BACKEND_HISTORY_SECRET;
+const expectedSecret = process.env.ISITOUT_SECRET;
 
 export const update = mutation(
   async ({ db }, args: { time: string; secret: string }) => {

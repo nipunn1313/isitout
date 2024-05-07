@@ -1,9 +1,9 @@
-import {useQuery} from "convex/react";
-import {api} from "../convex/_generated/api";
+import { useQuery } from "convex/react";
+import { api } from "../convex/_generated/api";
 
-import {formatRFC7231, formatDistanceToNowStrict} from "date-fns";
+import { formatRFC7231, formatDistanceToNowStrict } from "date-fns";
 
-function PushTime({d}) {
+function PushTime({ d }) {
   return (
     <div className="push-time" title={formatRFC7231(d)}>
       <span>{d.toLocaleString()}</span>
@@ -11,7 +11,7 @@ function PushTime({d}) {
   );
 }
 
-function Ago({d}) {
+function Ago({ d }) {
   return (
     <div className="ago">
       <span>{formatDistanceToNowStrict(d)} ago</span>
@@ -19,7 +19,7 @@ function Ago({d}) {
   );
 }
 
-function Row({message}) {
+function Row({ message }) {
   const d = new Date(message.pushDate);
   const version = message.version;
   const parts = version.split(".").map((x) => parseInt(x));
@@ -41,7 +41,7 @@ function Row({message}) {
 }
 
 export default function App() {
-  const messages = useQuery(api.backend_version_history.list) || [];
+  const messages = useQuery(api.version_history.list) || [];
   const lastSync = useQuery(api.last_sync.get) || "unknown";
   const lastSyncTime = new Date(lastSync.time * 1000).toLocaleString();
 

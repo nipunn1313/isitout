@@ -7,6 +7,10 @@ export default defineSchema({
     url: v.string(),
     version: v.string(),
   }).index("pushDate", ["pushDate"]),
+  version_history: defineTable({
+    service: v.string(),
+    version: v.string(),
+  }).index("by_service", ["service", "version"]),
   last_sync: defineTable({
     time: v.float64(),
   }),
