@@ -1,9 +1,9 @@
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-
+import React, { useState } from "react";
 import { formatRFC7231, formatDistanceToNowStrict } from "date-fns";
 
-function PushTime({ d }) {
+function PushTime({ d }: { d: Date }) {
   return (
     <div className="push-time" title={formatRFC7231(d)}>
       <span>{d.toLocaleString()}</span>
@@ -11,7 +11,7 @@ function PushTime({ d }) {
   );
 }
 
-function Ago({ d }) {
+function Ago({ d }: { d: Date }) {
   return (
     <div className="ago">
       <span>{formatDistanceToNowStrict(d)} ago</span>
@@ -19,15 +19,20 @@ function Ago({ d }) {
   );
 }
 
-function Row({ message }) {
+function Row({
+  message,
+}: {
+  message: { version: string; url: string; service: string; pushDate: number };
+}) {
   const d = new Date(message.pushDate);
   const version = message.version;
   const parts = version.split(".").map((x) => parseInt(x));
-  const last = parts.pop();
+  const last = parts.pop()!;
   const prev = `${parts.join(".")}.${last - 1}`;
   return (
-    <li className="row" key={message.pushDate.toString()}>
+    <li className="row">
       <a href={message.url}>{message.version}</a>
+      <div>{message.service}</div>
       <Ago d={d} />
       <a
         className="small"
@@ -40,10 +45,50 @@ function Row({ message }) {
   );
 }
 
+function Rows() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  const messages = useQuery(api.version_history.list, { service: value }) || [];
+  const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (event) => {
+    if (event.target.value === "All") {
+      setValue(undefined);
+    } else {
+      setValue(event.target.value);
+    }
+  };
+
+  const services = [
+    "All",
+    "convex-backend",
+    "big-brain",
+    "searchlight",
+    "funrun",
+    "load-generator",
+    "db-verifier",
+  ];
+
+  return (
+    <>
+      <select value={value} onChange={handleChange}>
+        {services.map((service) => (
+          <option key={service} value={service}>
+            {service}
+          </option>
+        ))}
+      </select>
+      <ul>
+        {messages.map((message) => (
+          <Row key={JSON.stringify(message)} message={message} />
+        ))}
+      </ul>
+    </>
+  );
+}
+
 export default function App() {
-  const messages = useQuery(api.version_history.list) || [];
-  const lastSync = useQuery(api.last_sync.get) || "unknown";
-  const lastSyncTime = new Date(lastSync.time * 1000).toLocaleString();
+  const lastSync = useQuery(api.last_sync.get);
+  const lastSyncTime = lastSync
+    ? new Date(lastSync.time * 1000).toLocaleString()
+    : "unknown";
 
   return (
     <main>
@@ -65,14 +110,7 @@ export default function App() {
       </pre>
       <p className="note">lists instances on a specific version.</p>
       <p className="note">All times are local, hover over timestamp for UTC.</p>
-      <ul>
-        {messages.map((message) => (
-          <Row
-            key={message.version + message.pushDate + ""}
-            message={message}
-          />
-        ))}
-      </ul>
+      <Rows />
     </main>
   );
 }

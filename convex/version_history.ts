@@ -27,24 +27,32 @@ export const addRow = mutation(
   }
 );
 
-export const list = query(async (ctx) => {
+export const list = query(async (ctx, { service }: { service?: string }) => {
   checkIdentity(ctx);
-  return (
-    await ctx.db
+  let queryResult;
+  if (service) {
+    queryResult = await ctx.db
       .query("version_history")
-      .withIndex("by_service", (q) => q.eq("service", "convex-backend"))
+      .withIndex("by_service", (q) => q.eq("service", service))
       .order("desc")
-      .collect()
-  ).map((row) => {
+      .collect();
+  } else {
+    queryResult = await ctx.db.query("version_history").order("desc").collect();
+  }
+  const result = queryResult.map((row) => {
     const url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
     const [datePart] = row.version.split("-");
-    const pushDate = +moment(datePart).toDate();
+    const buildDate = +moment(datePart).toDate();
+    const pushDate = row._creationTime;
     return {
+      service: row.service,
       version: row.version,
       url,
+      buildDate,
       pushDate,
     };
   });
+  return result;
 });
 
 export async function checkIdentity(ctx: QueryCtx) {

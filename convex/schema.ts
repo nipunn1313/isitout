@@ -10,7 +10,7 @@ export default defineSchema({
   version_history: defineTable({
     service: v.string(),
     version: v.string(),
-  }).index("by_service", ["service", "version"]),
+  }).index("by_service", ["service"]),
   last_sync: defineTable({
     time: v.float64(),
   }),

@@ -4,14 +4,14 @@ import { checkIdentity } from "./backend_version_history";
 const expectedSecret = process.env.ISITOUT_SECRET;
 
 export const update = mutation(
-  async ({ db }, args: { time: string; secret: string }) => {
+  async ({ db }, args: { time: number; secret: string }) => {
     const { secret, ...rest } = args;
     if (secret !== expectedSecret) {
       throw new Error("bad credentials");
     }
     const lastSync = await db.query("last_sync").unique();
     if (lastSync) {
-      await db.replace(lastSync._id, rest);
+      await db.patch(lastSync._id, rest);
     } else {
       await db.insert("last_sync", rest);
     }
