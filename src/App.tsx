@@ -47,6 +47,7 @@ function Row({
 
 function Rows() {
   const [value, setValue] = useState<string | undefined>(undefined);
+  const services = useQuery(api.version_history.services) || [];
   const messages = useQuery(api.version_history.list, { service: value }) || [];
   const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (event) => {
     if (event.target.value === "All") {
@@ -56,19 +57,10 @@ function Rows() {
     }
   };
 
-  const services = [
-    "All",
-    "convex-backend",
-    "big-brain",
-    "searchlight",
-    "funrun",
-    "load-generator",
-    "db-verifier",
-  ];
-
   return (
     <>
       <select value={value} onChange={handleChange}>
+        <option value={"All"}>All</option>
         {services.map((service) => (
           <option key={service} value={service}>
             {service}

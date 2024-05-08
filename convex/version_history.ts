@@ -27,6 +27,23 @@ export const addRow = mutation(
   }
 );
 
+export const services = query(async (ctx) => {
+  const services = [];
+  let doc = await ctx.db
+    .query("version_history")
+    .withIndex("by_service")
+    .first();
+  while (doc !== null) {
+    const service = doc.service;
+    services.push(service);
+    doc = await ctx.db
+      .query("version_history")
+      .withIndex("by_service", (q) => q.gt("service", service))
+      .first();
+  }
+  return services;
+});
+
 export const list = query(async (ctx, { service }: { service?: string }) => {
   checkIdentity(ctx);
   let queryResult;
