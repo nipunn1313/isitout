@@ -14,10 +14,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as backend_version_history from "../backend_version_history.js";
 import type * as ingest_github from "../ingest_github.js";
 import type * as last_sync from "../last_sync.js";
-import type * as seed from "../seed.js";
 import type * as version_history from "../version_history.js";
 
 /**
@@ -29,10 +27,8 @@ import type * as version_history from "../version_history.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  backend_version_history: typeof backend_version_history;
   ingest_github: typeof ingest_github;
   last_sync: typeof last_sync;
-  seed: typeof seed;
   version_history: typeof version_history;
 }>;
 export declare const api: FilterApi<

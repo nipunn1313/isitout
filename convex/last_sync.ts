@@ -1,5 +1,5 @@
 import { mutation, query } from "./_generated/server";
-import { checkIdentity } from "./backend_version_history";
+import { checkIdentity } from "./version_history";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
