@@ -23,19 +23,29 @@ function Row({
   message,
   gitShaToCheck,
 }: {
-  message: { version: string; url: string; service: string; pushDate: number };
+  message: {
+    version: string;
+    url: string;
+    service: string;
+    pushDate: number;
+    _creationTime: number;
+  };
   gitShaToCheck: string;
 }) {
   const compareCommits = useAction(api.github.compareCommits);
+  const prevDoc = useQuery(api.version_history.prevRev, {
+    service: message.service,
+    _creationTime: message._creationTime,
+  });
   const [comparison, setComparison] = useState("");
 
   const d = new Date(message.pushDate);
-  const version = message.version;
-  const parts = version.split(".").map((x) => parseInt(x));
-  const last = parts.pop()!;
-  const prev = `${parts.join(".")}.${last - 1}`;
 
+  const service = message.service;
+  const version = message.version;
   const base = version.split("-")[1];
+
+  const prev = prevDoc?.version || "";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,11 +77,11 @@ function Row({
     <li className="row">
       <div>{comparison}</div>
       <a href={message.url}>{message.version}</a>
-      <div>{message.service}</div>
+      <div>{service}</div>
       <Ago d={d} />
       <a
         className="small"
-        href={`https://github.com/get-convex/convex/compare/convex-backend/${prev}...get-convex:convex:convex-backend/${version}`}
+        href={`https://github.com/get-convex/convex/compare/${service}/${prev}...get-convex:convex:${service}/${version}`}
       >
         diff previous
       </a>

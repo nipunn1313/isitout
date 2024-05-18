@@ -1,5 +1,6 @@
 import moment from "moment";
 import { mutation, query, QueryCtx } from "./_generated/server";
+import { v } from "convex/values";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
@@ -62,6 +63,7 @@ export const list = query(async (ctx, { service }: { service?: string }) => {
     const buildDate = +moment(datePart).toDate();
     const pushDate = row._creationTime;
     return {
+      _creationTime: row._creationTime,
       service: row.service,
       version: row.version,
       url,
@@ -70,6 +72,21 @@ export const list = query(async (ctx, { service }: { service?: string }) => {
     };
   });
   return result;
+});
+
+export const prevRev = query({
+  args: {
+    service: v.string(),
+    _creationTime: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db
+      .query("version_history")
+      .withIndex("by_service", (q) =>
+        q.eq("service", args.service).lt("_creationTime", args._creationTime)
+      )
+      .first();
+  },
 });
 
 export async function checkIdentity(ctx: QueryCtx) {
