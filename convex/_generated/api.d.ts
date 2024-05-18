@@ -14,7 +14,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as ingest_github from "../ingest_github.js";
+import type * as github from "../github.js";
 import type * as last_sync from "../last_sync.js";
 import type * as version_history from "../version_history.js";
 
@@ -27,7 +27,7 @@ import type * as version_history from "../version_history.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  ingest_github: typeof ingest_github;
+  github: typeof github;
   last_sync: typeof last_sync;
   version_history: typeof version_history;
 }>;

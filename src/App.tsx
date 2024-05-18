@@ -1,6 +1,6 @@
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { formatRFC7231, formatDistanceToNowStrict } from "date-fns";
 
 function PushTime({ d }: { d: Date }) {
@@ -21,16 +21,51 @@ function Ago({ d }: { d: Date }) {
 
 function Row({
   message,
+  gitShaToCheck,
 }: {
   message: { version: string; url: string; service: string; pushDate: number };
+  gitShaToCheck: string;
 }) {
+  const compareCommits = useAction(api.github.compareCommits);
+  const [comparison, setComparison] = useState("");
+
   const d = new Date(message.pushDate);
   const version = message.version;
   const parts = version.split(".").map((x) => parseInt(x));
   const last = parts.pop()!;
   const prev = `${parts.join(".")}.${last - 1}`;
+
+  const base = version.split("-")[1];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setComparison("");
+      if (!gitShaToCheck) {
+        return;
+      }
+      const comparison = await compareCommits({ head: gitShaToCheck, base });
+
+      const getComparisonEmoji = () => {
+        switch (comparison) {
+          case "behind":
+          case "identical":
+            return "✅"; // Green check mark
+          case "ahead":
+            return "❌"; // Red X
+          case "diverged":
+          default:
+            return "❓"; // Question mark
+        }
+      };
+
+      setComparison(getComparisonEmoji());
+    };
+    fetchData();
+  }, [compareCommits, gitShaToCheck]);
+
   return (
     <li className="row">
+      <div>{comparison}</div>
       <a href={message.url}>{message.version}</a>
       <div>{message.service}</div>
       <Ago d={d} />
@@ -47,9 +82,13 @@ function Row({
 
 function Rows() {
   const [value, setValue] = useState<string | undefined>(undefined);
+  const [gitShaToCheck, setGitShaToCheck] = useState("");
   const services = useQuery(api.version_history.services) || [];
   const messages = useQuery(api.version_history.list, { service: value }) || [];
-  const handleChange: React.ChangeEventHandler<HTMLSelectElement> = (event) => {
+
+  const handleDropdownChange: React.ChangeEventHandler<HTMLSelectElement> = (
+    event
+  ) => {
     if (event.target.value === "All") {
       setValue(undefined);
     } else {
@@ -57,9 +96,15 @@ function Rows() {
     }
   };
 
+  const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (
+    event
+  ) => {
+    setGitShaToCheck(event.target.value);
+  };
+
   return (
     <>
-      <select value={value} onChange={handleChange}>
+      <select value={value} onChange={handleDropdownChange}>
         <option value={"All"}>All</option>
         {services.map((service) => (
           <option key={service} value={service}>
@@ -67,9 +112,26 @@ function Rows() {
           </option>
         ))}
       </select>
+      <input
+        type="text"
+        value={gitShaToCheck}
+        onChange={handleInputChange}
+        placeholder="paste a git sha here"
+      />
+      {gitShaToCheck && (
+        <>
+          <div>✅ - It's out!</div>
+          <div>❌ - It's not out!</div>
+          <div>❓ - Not sure.. it diverged</div>
+        </>
+      )}
       <ul>
         {messages.map((message) => (
-          <Row key={JSON.stringify(message)} message={message} />
+          <Row
+            key={JSON.stringify(message)}
+            message={message}
+            gitShaToCheck={gitShaToCheck}
+          />
         ))}
       </ul>
     </>
