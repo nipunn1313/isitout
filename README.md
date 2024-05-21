@@ -1,6 +1,4 @@
-# Convex tutorial
+# Is it out
 
-You're just a few minutes away from having a webapp running locally powered by
-Convex.
-
-See the tutorial at [docs.convex.dev](https://docs.convex.dev) for instructions.
+Is it out is an app built on Convex and used by Convex engineers to see the version
+history of each of our internal services.
