@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom";
 import "./index.css";
 import App from "./App";
 import {
@@ -19,18 +19,26 @@ const convex = new ConvexReactClient(address);
 
 function LoginButton() {
   const { loginWithRedirect } = useAuth0();
-  return <div style={{
-    height: "100vh",
-    width: "100vw",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
-  }}>
-    <button className="LoginButton" onClick={() => loginWithRedirect()}>Log in</button>
-  </div>;
+  return (
+    <div
+      style={{
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <button className="LoginButton" onClick={() => loginWithRedirect()}>
+        Log in
+      </button>
+    </div>
+  );
 }
 
-ReactDOM.render(
+const container = document.getElementById("root");
+const root = createRoot(container);
+root.render(
   <StrictMode>
     <Auth0Provider
       domain={authInfo.domain}
@@ -51,6 +59,5 @@ ReactDOM.render(
         </Unauthenticated>
       </ConvexProviderWithAuth0>
     </Auth0Provider>
-  </StrictMode>,
-  document.getElementById("root")
+  </StrictMode>
 );
