@@ -152,7 +152,7 @@ function Rows() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuRadioGroup
-              className="w-56"
+              className="w-96"
               value={value}
               onValueChange={setValue}
             >
@@ -160,21 +160,28 @@ function Rows() {
                 className="flex items-center justify-between px-2 cursor-pointer border-2 border-transparent hover:border-primary hover:border-solid"
                 value={"all"}
               >
-                All services
-                <ItemIndicator>
-                  <CheckIcon />
-                </ItemIndicator>
+                <span className="w-5 flex-shrink-0">
+                  <ItemIndicator>
+                    <CheckIcon />
+                  </ItemIndicator>
+                </span>
+                <span className="flex-grow">All services</span>
               </DropdownMenuRadioItem>
-              {services.map((service) => (
+              {Object.entries(services).map(([service, lastPushed]) => (
                 <DropdownMenuRadioItem
                   key={service}
                   value={service}
                   className="flex items-center justify-between px-2 cursor-pointer border-2 border-transparent hover:border-primary hover:border-solid"
                 >
-                  {service}
-                  <ItemIndicator>
-                    <CheckIcon />
-                  </ItemIndicator>
+                  <span className="w-5 flex-shrink-0">
+                    <ItemIndicator>
+                      <CheckIcon />
+                    </ItemIndicator>
+                  </span>
+                  <span className="flex-grow">{service}</span>
+                  <span className="mx-2">
+                    <Ago d={new Date(lastPushed)} />
+                  </span>
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

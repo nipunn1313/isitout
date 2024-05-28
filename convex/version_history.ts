@@ -29,17 +29,19 @@ export const addRow = mutation(
 );
 
 export const services = query(async (ctx) => {
-  const services = [];
+  const services: Record<string, number> = {};
   let doc = await ctx.db
     .query("version_history")
     .withIndex("by_service")
+    .order("desc")
     .first();
   while (doc !== null) {
     const service = doc.service;
-    services.push(service);
+    services[service] = doc._creationTime;
     doc = await ctx.db
       .query("version_history")
-      .withIndex("by_service", (q) => q.gt("service", service))
+      .withIndex("by_service", (q) => q.lt("service", service))
+      .order("desc")
       .first();
   }
   return services;
