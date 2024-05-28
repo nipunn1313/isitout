@@ -221,26 +221,34 @@ export default function App() {
           <span>Last sync: {lastSyncTime}</span>
         </p>
         <p className="note">
-          List of when backend versions were <i>canaried</i>,
+          For convex-backend, this indicates when versions were <i>canaried</i>.
           <br />
-          check{" "}
           <a
             className="underline text-blue-800 visited:text-purple-800"
             href="https://grafana.cvx.is/d/aab19343-40fb-48fa-9774-e5301a70a2cd/versions?orgId=1&viewPanel=4"
           >
             Backend Versions Plot »
           </a>{" "}
-          to make sure this version was rolled out.
+          can tell you if/when the version was rolled out. To list instances on
+          a specific version, run:
         </p>
         <pre className="note">
-          big-brain-tool dump-instances --current-version 0.0.417 --name-only
+          big-brain-tool dump-instances --current-version
+          20240524T135055Z-4d6ae6f745ec --name-only
         </pre>
-        <p className="note">lists instances on a specific version.</p>
         <p className="note">
           All times are local, hover over timestamp for UTC.
         </p>
       </div>
       <Rows />
+      <div>
+        <a
+          href="https://github.com/nipunn1313/isitout"
+          className="underline text-blue-800 visited:text-purple-800"
+        >
+          https://github.com/nipunn1313/isitout
+        </a>
+      </div>
     </main>
   );
 }
