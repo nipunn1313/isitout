@@ -104,18 +104,22 @@ function Row({
     <div className="flex gap-2 items-center">
       <div className="w-[10%]">{comparison}</div>
       <div className="flex flex-col w-[50%]">
-        <a
-          className="underline text-blue-800 visited:text-purple-800"
-          href={message.url}
-        >
-          {message.version}
-        </a>
-        <a
-          className="underline text-primary text-xs"
-          href={`https://github.com/get-convex/convex/compare/${service}/${prev}...get-convex:convex:${service}/${version}`}
-        >
-          diff previous
-        </a>
+        <span>
+          <a
+            className="underline text-blue-800 visited:text-purple-800"
+            href={message.url}
+          >
+            {message.version}
+          </a>
+        </span>
+        <span>
+          <a
+            className="underline text-primary text-xs"
+            href={`https://github.com/get-convex/convex/compare/${service}/${prev}...get-convex:convex:${service}/${version}`}
+          >
+            diff previous
+          </a>
+        </span>
       </div>
       <div className="w-[20%]">{service}</div>
       <div className="w-[20%] flex flex-col">
