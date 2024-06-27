@@ -30,6 +30,7 @@ services = [
     "db-verifier",
 ]
 
+last_error = None
 for service in services:
     try:
         result = subprocess.run(
@@ -46,6 +47,7 @@ for service in services:
     except subprocess.CalledProcessError as e:
         sys.stdout.buffer.write(e.stdout)
         sys.stdout.buffer.write(e.stderr)
+        last_error = e
         continue
 
     line = result.stdout.decode("utf-8").strip()
@@ -59,6 +61,9 @@ for service in services:
             "secret": SECRET,
         },
     )
+
+if last_error:
+    raise last_error
 
 now = datetime.now().timestamp()
 print(now)
