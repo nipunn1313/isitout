@@ -1,10 +1,12 @@
+import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { checkIdentity } from "./version_history";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
-export const update = mutation(
-  async ({ db }, args: { time: number; secret: string }) => {
+export const update = mutation({
+  args: { time: v.float64(), secret: v.string() },
+  handler: async ({ db }, args) => {
     const { secret, ...rest } = args;
     if (secret !== expectedSecret) {
       throw new Error("bad credentials");
@@ -15,10 +17,13 @@ export const update = mutation(
     } else {
       await db.insert("last_sync", rest);
     }
-  }
-);
+  },
+});
 
-export const get = query(async (ctx) => {
-  checkIdentity(ctx);
-  return ctx.db.query("last_sync").unique();
+export const get = query({
+  args: {},
+  handler: async (ctx) => {
+    checkIdentity(ctx);
+    return ctx.db.query("last_sync").unique();
+  },
 });

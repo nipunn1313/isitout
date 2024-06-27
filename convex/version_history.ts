@@ -4,15 +4,13 @@ import { v } from "convex/values";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
-export const addRow = mutation(
-  async (
-    ctx,
-    {
-      version,
-      service,
-      secret,
-    }: { version: string; service: string; secret: string }
-  ) => {
+export const addRow = mutation({
+  args: {
+    version: v.string(),
+    service: v.string(),
+    secret: v.string(),
+  },
+  handler: async (ctx, { version, service, secret }) => {
     if (secret !== expectedSecret) {
       throw new Error("bad credentials");
     }
@@ -25,55 +23,64 @@ export const addRow = mutation(
       return;
     }
     await ctx.db.insert("version_history", { service, version });
-  }
-);
-
-export const services = query(async (ctx) => {
-  const services: Record<string, number> = {};
-  let doc = await ctx.db
-    .query("version_history")
-    .withIndex("by_service")
-    .order("desc")
-    .first();
-  while (doc !== null) {
-    const service = doc.service;
-    services[service] = doc._creationTime;
-    doc = await ctx.db
-      .query("version_history")
-      .withIndex("by_service", (q) => q.lt("service", service))
-      .order("desc")
-      .first();
-  }
-  return services;
+  },
 });
 
-export const list = query(async (ctx, { service }: { service?: string }) => {
-  checkIdentity(ctx);
-  let queryResult;
-  if (service) {
-    queryResult = await ctx.db
+export const services = query({
+  args: {},
+  handler: async (ctx) => {
+    const services: Record<string, number> = {};
+    let doc = await ctx.db
       .query("version_history")
-      .withIndex("by_service", (q) => q.eq("service", service))
+      .withIndex("by_service")
       .order("desc")
-      .collect();
-  } else {
-    queryResult = await ctx.db.query("version_history").order("desc").collect();
-  }
-  const result = queryResult.map((row) => {
-    const url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
-    const [datePart] = row.version.split("-");
-    const buildDate = +moment(datePart).toDate();
-    const pushDate = row._creationTime;
-    return {
-      _creationTime: row._creationTime,
-      service: row.service,
-      version: row.version,
-      url,
-      buildDate,
-      pushDate,
-    };
-  });
-  return result;
+      .first();
+    while (doc !== null) {
+      const service = doc.service;
+      services[service] = doc._creationTime;
+      doc = await ctx.db
+        .query("version_history")
+        .withIndex("by_service", (q) => q.lt("service", service))
+        .order("desc")
+        .first();
+    }
+    return services;
+  },
+});
+
+export const list = query({
+  args: { service: v.optional(v.string()) },
+  handler: async (ctx, { service }) => {
+    checkIdentity(ctx);
+    let queryResult;
+    if (service) {
+      queryResult = await ctx.db
+        .query("version_history")
+        .withIndex("by_service", (q) => q.eq("service", service))
+        .order("desc")
+        .collect();
+    } else {
+      queryResult = await ctx.db
+        .query("version_history")
+        .order("desc")
+        .collect();
+    }
+    const result = queryResult.map((row) => {
+      const url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
+      const [datePart] = row.version.split("-");
+      const buildDate = +moment(datePart).toDate();
+      const pushDate = row._creationTime;
+      return {
+        _creationTime: row._creationTime,
+        service: row.service,
+        version: row.version,
+        url,
+        buildDate,
+        pushDate,
+      };
+    });
+    return result;
+  },
 });
 
 export const prevRev = query({
