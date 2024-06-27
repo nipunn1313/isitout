@@ -10,6 +10,7 @@ export const addRow = mutation({
     service: v.string(),
     secret: v.string(),
   },
+  returns: v.null(),
   handler: async (ctx, { version, service, secret }) => {
     if (secret !== expectedSecret) {
       throw new Error("bad credentials");
@@ -28,6 +29,7 @@ export const addRow = mutation({
 
 export const services = query({
   args: {},
+  returns: (v as any).record(v.string(), v.number()),
   handler: async (ctx) => {
     const services: Record<string, number> = {};
     let doc = await ctx.db
@@ -50,6 +52,16 @@ export const services = query({
 
 export const list = query({
   args: { service: v.optional(v.string()) },
+  returns: v.array(
+    v.object({
+      _creationTime: v.number(),
+      service: v.string(),
+      version: v.string(),
+      url: v.string(),
+      buildDate: v.number(),
+      pushDate: v.number(),
+    })
+  ),
   handler: async (ctx, { service }) => {
     checkIdentity(ctx);
     let queryResult;
