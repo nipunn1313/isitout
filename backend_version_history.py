@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -10,6 +11,8 @@ if os.environ.get("PROD"):
     load_dotenv(".env")
 else:
     load_dotenv(".env.local")
+
+os.environ["PATH"] = os.environ["PATH"] + ":" + "/usr/local/bin"
 
 SECRET = os.environ["ISITOUT_SECRET"]
 assert SECRET
@@ -41,8 +44,9 @@ for service in services:
             check=True,
         )
     except subprocess.CalledProcessError as e:
-        print(e.stdout)
-        print(e.stderr)
+        sys.stdout.buffer.write(e.stdout)
+        sys.stdout.buffer.write(e.stderr)
+        continue
 
     line = result.stdout.decode("utf-8").strip()
     version = line.split(" ")[0]
