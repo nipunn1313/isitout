@@ -23,6 +23,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// 7 days
+const STALE_AGE_MILLIS = 1000 * 3600 * 24 * 7;
+
 function PushTime({ d }: { d: Date }) {
   return (
     <TooltipProvider>
@@ -39,9 +42,11 @@ function PushTime({ d }: { d: Date }) {
 }
 
 function Ago({ d }: { d: Date }) {
+  const isStale = Date.now() - d.valueOf() >= STALE_AGE_MILLIS;
   return (
     <div className="ago">
       <span>{formatDistanceToNowStrict(d)} ago</span>
+      {isStale && "🥱"}
     </div>
   );
 }
@@ -133,7 +138,7 @@ function Row({
 function Rows() {
   const [value, setValue] = useState("all");
   const [gitShaToCheck, setGitShaToCheck] = useState("");
-  const services = useQuery(api.version_history.services) || [];
+  const serviceToLastPushed = useQuery(api.version_history.services) || [];
   const messages =
     useQuery(api.version_history.list, {
       service: value === "all" ? undefined : value,
@@ -171,23 +176,25 @@ function Rows() {
                 </span>
                 <span className="flex-grow">All services</span>
               </DropdownMenuRadioItem>
-              {Object.entries(services).map(([service, lastPushed]) => (
-                <DropdownMenuRadioItem
-                  key={service}
-                  value={service}
-                  className="flex items-center justify-between px-2 cursor-pointer border-2 border-transparent hover:border-primary hover:border-solid"
-                >
-                  <span className="w-5 flex-shrink-0">
-                    <ItemIndicator>
-                      <CheckIcon />
-                    </ItemIndicator>
-                  </span>
-                  <span className="flex-grow">{service}</span>
-                  <span className="mx-2">
-                    <Ago d={new Date(lastPushed)} />
-                  </span>
-                </DropdownMenuRadioItem>
-              ))}
+              {Object.entries(serviceToLastPushed).map(
+                ([service, lastPushed]) => (
+                  <DropdownMenuRadioItem
+                    key={service}
+                    value={service}
+                    className="flex items-center justify-between px-2 cursor-pointer border-2 border-transparent hover:border-primary hover:border-solid"
+                  >
+                    <span className="w-5 flex-shrink-0">
+                      <ItemIndicator>
+                        <CheckIcon />
+                      </ItemIndicator>
+                    </span>
+                    <span className="flex-grow">{service}</span>
+                    <span className="mx-2">
+                      <Ago d={new Date(lastPushed)} />
+                    </span>
+                  </DropdownMenuRadioItem>
+                )
+              )}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -205,6 +212,7 @@ function Rows() {
           <div>❓ - Not sure.. it diverged</div>
         </>
       )}
+      <div>🥱 - It's been over a week</div>
       <div className="flex flex-col p-4 divide-y gap-2">
         {messages.map((message) => (
           <Row
