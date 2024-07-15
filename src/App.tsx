@@ -41,12 +41,15 @@ function PushTime({ d }: { d: Date }) {
   );
 }
 
+function isStale(d: Date): boolean {
+  return Date.now() - d.valueOf() >= STALE_AGE_MILLIS;
+}
+
 function Ago({ d }: { d: Date }) {
-  const isStale = Date.now() - d.valueOf() >= STALE_AGE_MILLIS;
   return (
     <div className="ago">
       <span>{formatDistanceToNowStrict(d)} ago</span>
-      {isStale && "🥱"}
+      {isStale(d) && "🥱"}
     </div>
   );
 }
@@ -150,6 +153,10 @@ function Rows() {
     setGitShaToCheck(event.target.value);
   };
 
+  const anyStale = Object.values(serviceToLastPushed).some((lastPushed) =>
+    isStale(new Date(lastPushed))
+  );
+
   return (
     <div className="max-w-[1600px] w-full">
       <div className="flex ml-4 gap-4 p-4 flex-grow-0 flex-shrink">
@@ -157,6 +164,7 @@ function Rows() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
               {value === "all" ? "All services" : value}
+              {anyStale && "🥱"}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
