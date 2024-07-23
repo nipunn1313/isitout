@@ -21,7 +21,32 @@ CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)
 convex_client.set_debug(True)
 
-services = [
+last_error = None
+
+try:
+    result = subprocess.run(
+        ["git", "ls-remote", "origin", "refs/heads/dashboard-prod"],
+        cwd=os.path.expanduser("~/src/convex"),
+        capture_output=True,
+        check=True,
+    )
+    line = result.stdout.decode("utf-8").strip()
+    version = line.split()[0]
+except subprocess.CalledProcessError as e:
+    sys.stdout.buffer.write(e.stdout)
+    sys.stdout.buffer.write(e.stderr)
+    last_error = e
+
+convex_client.mutation(
+    "version_history:addRow",
+    {
+        "version": version,
+        "service": "dashboard",
+        "secret": SECRET,
+    },
+)
+
+builder_services = [
     "convex-backend",
     "big-brain",
     "searchlight",
@@ -29,9 +54,7 @@ services = [
     "load-generator",
     "db-verifier",
 ]
-
-last_error = None
-for service in services:
+for service in builder_services:
     try:
         result = subprocess.run(
             [
