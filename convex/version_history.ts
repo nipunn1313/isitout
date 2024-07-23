@@ -78,9 +78,15 @@ export const list = query({
         .collect();
     }
     const result = queryResult.map((row) => {
-      const url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
+      let url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
       const [datePart] = row.version.split("-");
-      const buildDate = +moment(datePart).toDate();
+      let buildDate;
+      try {
+        buildDate = +moment(datePart).toDate();
+      } catch (e) {
+        buildDate = 0;
+        url = `https://github.com/get-convex/convex/commit/${row.version}`;
+      }
       const pushDate = row._creationTime;
       return {
         _creationTime: row._creationTime,
