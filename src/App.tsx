@@ -78,7 +78,7 @@ function Row({
 
   const service = message.service;
   const version = message.version;
-  const base = version.split("-")[1];
+  const base = version.split("-").pop()!;
 
   const prev = prevDoc?.version || "";
 
