@@ -1,6 +1,7 @@
 import moment from "moment";
 import { mutation, query, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
+import { Doc } from "./_generated/dataModel";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
@@ -27,41 +28,43 @@ export const addRow = mutation({
   },
 });
 
+async function listServices(ctx: QueryCtx) {
+  const services: Record<string, number> = {};
+  let doc = await ctx.db
+    .query("version_history")
+    .withIndex("by_service")
+    .order("desc")
+    .first();
+  while (doc !== null) {
+    const service = doc.service;
+    services[service] = doc._creationTime;
+    doc = await ctx.db
+      .query("version_history")
+      .withIndex("by_service", (q) => q.lt("service", service))
+      .order("desc")
+      .first();
+  }
+  return services;
+}
+
 export const services = query({
   args: {},
   returns: (v as any).record(v.string(), v.number()),
-  handler: async (ctx) => {
-    const services: Record<string, number> = {};
-    let doc = await ctx.db
-      .query("version_history")
-      .withIndex("by_service")
-      .order("desc")
-      .first();
-    while (doc !== null) {
-      const service = doc.service;
-      services[service] = doc._creationTime;
-      doc = await ctx.db
-        .query("version_history")
-        .withIndex("by_service", (q) => q.lt("service", service))
-        .order("desc")
-        .first();
-    }
-    return services;
-  },
+  handler: listServices,
+});
+
+const renderedVersionHistoryRow = v.object({
+  _creationTime: v.number(),
+  service: v.string(),
+  version: v.string(),
+  url: v.string(),
+  buildDate: v.number(),
+  pushDate: v.number(),
 });
 
 export const list = query({
   args: { service: v.optional(v.string()) },
-  returns: v.array(
-    v.object({
-      _creationTime: v.number(),
-      service: v.string(),
-      version: v.string(),
-      url: v.string(),
-      buildDate: v.number(),
-      pushDate: v.number(),
-    })
-  ),
+  returns: v.array(renderedVersionHistoryRow),
   handler: async (ctx, { service }) => {
     checkIdentity(ctx);
     let queryResult;
@@ -77,26 +80,49 @@ export const list = query({
         .order("desc")
         .collect();
     }
-    const result = queryResult.map((row) => {
-      let url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
-      const [datePart] = row.version.split("-");
-      let buildDate;
-      try {
-        buildDate = +moment(datePart).toDate();
-      } catch (e) {
-        buildDate = 0;
-        url = `https://github.com/get-convex/convex/commit/${row.version}`;
-      }
-      const pushDate = row._creationTime;
-      return {
-        _creationTime: row._creationTime,
-        service: row.service,
-        version: row.version,
-        url,
-        buildDate,
-        pushDate,
-      };
-    });
+    const result = queryResult.map(renderVersionHistoryRow);
+    return result;
+  },
+});
+
+function renderVersionHistoryRow(row: Doc<"version_history">) {
+  let url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
+  const [datePart] = row.version.split("-");
+  let buildDate;
+  try {
+    buildDate = +moment(datePart).toDate();
+  } catch (e) {
+    buildDate = 0;
+    url = `https://github.com/get-convex/convex/commit/${row.version}`;
+  }
+  const pushDate = row._creationTime;
+  return {
+    _creationTime: row._creationTime,
+    service: row.service,
+    version: row.version,
+    url,
+    buildDate,
+    pushDate,
+  };
+}
+
+export const listLatest = query({
+  args: {},
+  returns: v.array(renderedVersionHistoryRow),
+  handler: async (ctx) => {
+    const services = await listServices(ctx);
+    const result = await Promise.all(
+      Object.entries(services).map(async ([service, _creationTime]) => {
+        const row = await ctx.db
+          .query("version_history")
+          .withIndex("by_service", (q) => q.eq("service", service))
+          .order("desc")
+          .first();
+        return renderVersionHistoryRow(row!);
+      })
+    );
+    // Sort by pushDate descending.
+    result.sort((a, b) => b.pushDate - a.pushDate);
     return result;
   },
 });
