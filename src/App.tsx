@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  CheckboxItem,
   DropdownMenuRadioItem,
   ItemIndicator,
 } from "@radix-ui/react-dropdown-menu";
@@ -140,12 +141,16 @@ function Row({
 
 function Rows() {
   const [value, setValue] = useState("all");
+  const [latestOnly, setLatestOnly] = useState(true);
+  const displayLatestOnly = latestOnly && value === "all";
   const [gitShaToCheck, setGitShaToCheck] = useState("");
   const serviceToLastPushed = useQuery(api.version_history.services) || [];
   const messages =
     useQuery(api.version_history.list, {
       service: value === "all" ? undefined : value,
     }) || [];
+  const latestPushes = useQuery(api.version_history.listLatest) || [];
+  const pushes = displayLatestOnly ? latestPushes : messages;
 
   const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (
     event
@@ -206,6 +211,16 @@ function Rows() {
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>
+        {
+          value === "all" && <div>
+            <Input
+              type="checkbox"
+              checked={latestOnly}
+              onChange={(e) => setLatestOnly(e.target.checked)}
+            />
+            Latest only
+          </div>
+        }
         <Input
           className="max-w-56"
           onChange={handleInputChange}
@@ -222,7 +237,7 @@ function Rows() {
       )}
       <div>🥱 - It's been over a week</div>
       <div className="flex flex-col p-4 divide-y gap-2">
-        {messages.map((message) => (
+        {pushes.map((message) => (
           <Row
             key={JSON.stringify(message)}
             message={message}
