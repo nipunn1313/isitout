@@ -46,14 +46,23 @@ convex_client.mutation(
     },
 )
 
-builder_services = [
-    "convex-backend",
-    "big-brain",
-    "searchlight",
-    "funrun",
-    "load-generator",
-    "db-verifier",
-]
+try:
+    result = subprocess.run(
+        [
+            os.path.expanduser("~/.local/bin/poetry"),
+            "run",
+            "services",
+        ],
+        cwd=os.path.expanduser("~/src/convex/ops/builder"),
+        capture_output=True,
+        check=True,
+    )
+except subprocess.CalledProcessError as e:
+    sys.stdout.buffer.write(e.stdout)
+    sys.stdout.buffer.write(e.stderr)
+
+builder_services = result.stdout.decode("utf-8").splitlines()
+
 for service in builder_services:
     try:
         result = subprocess.run(
@@ -68,13 +77,19 @@ for service in builder_services:
             check=True,
         )
     except subprocess.CalledProcessError as e:
+        if e.stdout.decode("utf-8").strip() == "unknown":
+            continue
         sys.stdout.buffer.write(e.stdout)
         sys.stdout.buffer.write(e.stderr)
         last_error = e
         continue
 
     line = result.stdout.decode("utf-8").strip()
+    if not line or line == "unknown":
+        continue
     version = line.split(" ")[0]
+    if not version or version == "unknown":
+        continue
 
     convex_client.mutation(
         "version_history:addRow",
