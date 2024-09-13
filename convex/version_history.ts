@@ -2,6 +2,7 @@ import moment from "moment";
 import { mutation, query, QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { Doc } from "./_generated/dataModel";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 const expectedSecret = process.env.ISITOUT_SECRET;
 
@@ -143,17 +144,21 @@ export const prevRev = query({
 });
 
 export async function checkIdentity(ctx: QueryCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) {
     throw new Error("Unauthenticated call");
   }
-  if (!identity.email) {
+  const user = await ctx.db.get(userId);
+  if (!user) {
+    throw new Error("Unauthenticated call");
+  }
+  if (!user.email) {
     throw new Error("Requires email");
   }
-  if (!identity.email.endsWith("@convex.dev")) {
+  if (!user.email.endsWith("@convex.dev")) {
     throw new Error("Must have @convex.dev email");
   }
-  if (!identity.emailVerified) {
+  if (user.emailVerificationTime === undefined) {
     throw new Error("Email must be verified");
   }
 }
