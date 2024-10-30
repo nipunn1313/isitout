@@ -112,6 +112,7 @@ export const prevRev = query({
       .withIndex("by_service", (q) =>
         q.eq("service", args.service).lt("_creationTime", args._creationTime)
       )
+      .order("desc")
       .first();
   },
 });
