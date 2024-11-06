@@ -254,18 +254,16 @@ export default function App() {
   const lastSyncTime = lastSync
     ? new Date(lastSync.time * 1000).toLocaleString()
     : "unknown";
-  const lastSyncTimeAgo = lastSync && (
-    <Ago d={new Date(lastSync.time * 1000)} />
-  );
+  const scream = lastSync && Date.now() - lastSync.time * 1000 >= 5 * 60 * 1000;
 
   return (
     <main className="flex flex-col h-[100vh] w-[100vw] p-4 gap-2 justify-start items-center">
       <h1 className="text-4xl font-extrabold text-center">isitout</h1>
       <div className="flex flex-col mx-auto gap-2">
         <p className="bg-primary text-primary-foreground p-2 rounded text-center">
-          <span>
-            Last sync: {lastSyncTime} {lastSyncTimeAgo}
-          </span>
+          <span>Last sync: {lastSyncTime} </span>
+          <br />
+          <span>{scream ? "😱😱😱Sync seems broken😱😱😱" : ""}</span>
         </p>
         <p className="note">
           For convex-backend, this indicates when versions were <i>canaried</i>.
