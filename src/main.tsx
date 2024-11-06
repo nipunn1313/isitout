@@ -10,10 +10,7 @@ import {
 
 import { ConvexAuthProvider, useAuthActions } from "@convex-dev/auth/react";
 
-import authConfig from "../convex/auth.config.js";
-const authInfo = authConfig.providers[0];
 const address = import.meta.env.VITE_CONVEX_URL;
-
 const convex = new ConvexReactClient(address);
 
 function LoginButton() {
