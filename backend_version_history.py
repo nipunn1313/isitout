@@ -23,28 +23,34 @@ convex_client.set_debug(True)
 
 last_error = None
 
-try:
-    result = subprocess.run(
-        ["git", "ls-remote", "origin", "refs/heads/dashboard-prod"],
-        cwd=os.path.expanduser("~/src/convex"),
-        capture_output=True,
-        check=True,
-    )
-    line = result.stdout.decode("utf-8").strip()
-    version = line.split()[0]
-except subprocess.CalledProcessError as e:
-    sys.stdout.buffer.write(e.stdout)
-    sys.stdout.buffer.write(e.stderr)
-    last_error = e
+git_services = {
+    "dashboard": "refs/heads/dashboard-prod",
+    "docs": "refs/heads/docs-prod",
+}
 
-convex_client.mutation(
-    "version_history:addRow",
-    {
-        "version": version,
-        "service": "dashboard",
-        "secret": SECRET,
-    },
-)
+for service, ref in git_services.items():
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "origin", ref],
+            cwd=os.path.expanduser("~/src/convex"),
+            capture_output=True,
+            check=True,
+        )
+        line = result.stdout.decode("utf-8").strip()
+        version = line.split()[0]
+    except subprocess.CalledProcessError as e:
+        sys.stdout.buffer.write(e.stdout)
+        sys.stdout.buffer.write(e.stderr)
+        last_error = e
+
+    convex_client.mutation(
+        "version_history:addRow",
+        {
+            "version": version,
+            "service": service,
+            "secret": SECRET,
+        },
+    )
 
 try:
     result = subprocess.run(
