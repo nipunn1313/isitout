@@ -266,22 +266,6 @@ export default function App() {
           <span>{scream ? "😱😱😱Sync seems broken😱😱😱" : ""}</span>
         </p>
         <p className="note">
-          For convex-backend, this indicates when versions were <i>canaried</i>.
-          <br />
-          <a
-            className="underline text-blue-800 visited:text-purple-800"
-            href="https://grafana.cvx.is/d/aab19343-40fb-48fa-9774-e5301a70a2cd/versions?orgId=1&viewPanel=4"
-          >
-            Backend Versions Plot »
-          </a>{" "}
-          can tell you if/when the version was rolled out. To list instances on
-          a specific version, run:
-        </p>
-        <pre className="note">
-          big-brain-tool dump-instances --current-version
-          20240524T135055Z-4d6ae6f745ec --name-only
-        </pre>
-        <p className="note">
           All times are local, hover over timestamp for UTC.
         </p>
       </div>
