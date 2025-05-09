@@ -19,7 +19,6 @@ assert SECRET
 
 CONVEX_URL = os.environ["CONVEX_URL"]
 convex_client = ConvexClient(CONVEX_URL)
-convex_client.set_debug(True)
 
 last_error = None
 
