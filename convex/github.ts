@@ -55,6 +55,18 @@ export const getLatestConvexBackendContainer = internalAction({
   },
 });
 
+export const getBranchRev = internalAction({
+  args: { branch: v.string() },
+  handler: async (_ctx, args) => {
+    const branch = await octokit.repos.getBranch({
+      owner: "get-convex",
+      repo: "convex",
+      branch: args.branch,
+    });
+    return branch.data.commit.sha;
+  },
+});
+
 export const trackConvexBackendRelease = internalAction({
   args: {},
   handler: async (ctx) => {
@@ -80,5 +92,25 @@ export const trackConvexBackendContainer = internalAction({
       service: "self-hosted",
       secret: process.env.ISITOUT_SECRET!,
     });
+  },
+});
+
+export const trackBranchRevs = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const branchByService = {
+      dashboard: "dashboard-prod",
+      docs: "docs-prod",
+    };
+    for (const [service, branch] of Object.entries(branchByService)) {
+      const rev = await ctx.runAction(internal.github.getBranchRev, {
+        branch,
+      });
+      await ctx.runMutation(api.version_history.addRow, {
+        version: rev,
+        service,
+        secret: process.env.ISITOUT_SECRET!,
+      });
+    }
   },
 });

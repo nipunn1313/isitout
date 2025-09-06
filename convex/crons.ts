@@ -16,4 +16,10 @@ crons.interval(
   internal.github.trackConvexBackendContainer,
 );
 
+crons.interval(
+  "track branch revs",
+  { minutes: 1 },
+  internal.github.trackBranchRevs,
+);
+
 export default crons;
