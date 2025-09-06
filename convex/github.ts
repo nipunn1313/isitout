@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/rest";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
 
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN2 });
 
@@ -20,7 +21,7 @@ export const compareCommits = action({
   },
 });
 
-export const getLatestConvexBackendRelease = action({
+export const getLatestConvexBackendRelease = internalAction({
   args: {},
   handler: async (_ctx, _args) => {
     const release = await octokit.repos.getLatestRelease({
@@ -31,7 +32,7 @@ export const getLatestConvexBackendRelease = action({
   },
 });
 
-export const getLatestConvexBackendContainer = action({
+export const getLatestConvexBackendContainer = internalAction({
   args: {},
   handler: async (_ctx, _args) => {
     const packages =
@@ -51,5 +52,33 @@ export const getLatestConvexBackendContainer = action({
     return (
       packages.data[0].metadata?.container?.tags?.[0] || packages.data[0].name
     );
+  },
+});
+
+export const trackConvexBackendRelease = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const version = await ctx.runAction(
+      internal.github.getLatestConvexBackendRelease,
+    );
+    await ctx.runMutation(api.version_history.addRow, {
+      version,
+      service: "local-dev",
+      secret: process.env.ISITOUT_SECRET!,
+    });
+  },
+});
+
+export const trackConvexBackendContainer = internalAction({
+  args: {},
+  handler: async (ctx) => {
+    const version = await ctx.runAction(
+      internal.github.getLatestConvexBackendContainer,
+    );
+    await ctx.runMutation(api.version_history.addRow, {
+      version,
+      service: "self-hosted",
+      secret: process.env.ISITOUT_SECRET!,
+    });
   },
 });

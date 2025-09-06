@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as auth from "../auth.js";
+import type * as crons from "../crons.js";
 import type * as github from "../github.js";
 import type * as http from "../http.js";
 import type * as last_sync from "../last_sync.js";
@@ -29,6 +30,7 @@ import type * as version_history from "../version_history.js";
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  crons: typeof crons;
   github: typeof github;
   http: typeof http;
   last_sync: typeof last_sync;
