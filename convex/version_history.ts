@@ -88,14 +88,21 @@ export const list = query({
 
 function renderVersionHistoryRow(row: Doc<"version_history">) {
   let url = `https://go.cvx.is/github_release/${row.service}/${row.version}`;
-  const [datePart] = row.version.split("-");
-  let buildDate;
-  try {
-    buildDate = +moment(datePart).toDate();
-  } catch (e) {
-    buildDate = 0;
-    url = `https://github.com/get-convex/convex/commit/${row.version}`;
+  let buildDate = 0;
+
+  if (row.service == "local-dev") {
+    url = `https://github.com/get-convex/convex-backend/releases/tag/${row.version}`;
+  } else if (row.service == "self-hosted") {
+    url = `https://github.com/get-convex/convex-backend/pkgs/container/convex-backend`;
+  } else {
+    const [datePart, rest] = row.version.split("-");
+    if (rest) {
+      buildDate = +moment(datePart).toDate();
+    } else {
+      url = `https://github.com/get-convex/convex/commit/${row.version}`;
+    }
   }
+
   const pushDate = row._creationTime;
   return {
     _creationTime: row._creationTime,
@@ -120,7 +127,7 @@ export const listLatest = query({
           .order("desc")
           .first();
         return renderVersionHistoryRow(row!);
-      })
+      }),
     );
     // Sort by pushDate descending.
     result.sort((a, b) => b.pushDate - a.pushDate);
@@ -137,7 +144,7 @@ export const prevRev = query({
     return ctx.db
       .query("version_history")
       .withIndex("by_service", (q) =>
-        q.eq("service", args.service).lt("_creationTime", args._creationTime)
+        q.eq("service", args.service).lt("_creationTime", args._creationTime),
       )
       .order("desc")
       .first();
