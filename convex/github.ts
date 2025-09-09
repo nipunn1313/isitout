@@ -40,7 +40,7 @@ export const getLatestConvexBackendContainer = internalAction({
         package_type: "container",
         package_name: "convex-backend",
         org: "get-convex",
-        per_page: 1,
+        per_page: 100,
         page: 1,
       });
 
@@ -48,10 +48,13 @@ export const getLatestConvexBackendContainer = internalAction({
       throw new Error("No container packages found");
     }
 
-    // Return the most recent package version name/tag
-    return (
-      packages.data[0].metadata?.container?.tags?.[0] || packages.data[0].name
-    );
+    for (const packageData of packages.data) {
+      if (packageData.metadata?.container?.tags[1] === "latest") {
+        return packageData?.metadata?.container?.tags[0];
+      }
+    }
+
+    throw new Error("No latest container package found");
   },
 });
 
