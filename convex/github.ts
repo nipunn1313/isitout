@@ -9,8 +9,25 @@ export const compareCommits = action({
   args: {
     base: v.string(),
     head: v.string(),
+    service: v.string(),
   },
   handler: async (_ctx, args) => {
+    if (args.service === "self-hosted" || args.service === "local-dev") {
+      // Get the base commit. Then extract the git origin revid from the commit message.
+      // It looks something like this GitOrigin-RevId: 2aa20649ba78df338cfae387a99f3e581f1d8e72
+      const baseCommit = await octokit.repos.getCommit({
+        owner: "get-convex",
+        repo: "convex-backend",
+        ref: args.base,
+      });
+      const commitMessage = baseCommit.data.commit.message;
+      const match = commitMessage.match(/GitOrigin-RevId: ([a-f0-9]+)/);
+      if (!match) {
+        throw new Error("Could not find GitOrigin-RevId in commit message");
+      }
+      args.base = match[1];
+      console.log(`${JSON.stringify(args)}`);
+    }
     const comparison = await octokit.repos.compareCommits({
       owner: "get-convex",
       repo: "convex",

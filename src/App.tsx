@@ -89,7 +89,11 @@ function Row({
       if (!gitShaToCheck) {
         return;
       }
-      const comparison = await compareCommits({ head: gitShaToCheck, base });
+      const comparison = await compareCommits({
+        head: gitShaToCheck,
+        base,
+        service,
+      });
 
       const getComparisonEmoji = () => {
         switch (comparison) {
@@ -153,13 +157,13 @@ function Rows() {
   const pushes = displayLatestOnly ? latestPushes : messages;
 
   const handleInputChange: React.ChangeEventHandler<HTMLInputElement> = (
-    event
+    event,
   ) => {
     setGitShaToCheck(event.target.value);
   };
 
   const anyStale = Object.values(serviceToLastPushed).some((lastPushed) =>
-    isStale(new Date(lastPushed))
+    isStale(new Date(lastPushed)),
   );
 
   return (
@@ -206,7 +210,7 @@ function Rows() {
                       <Ago d={new Date(lastPushed)} />
                     </span>
                   </DropdownMenuRadioItem>
-                )
+                ),
               )}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
