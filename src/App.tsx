@@ -1,4 +1,5 @@
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { Id } from "../convex/_generated/dataModel";
 import { api } from "../convex/_generated/api";
 import React, { useEffect, useState } from "react";
 import { formatRFC7231, formatDistanceToNowStrict } from "date-fns";
@@ -60,15 +61,18 @@ function Row({
   gitShaToCheck,
 }: {
   message: {
+    _id: Id<"version_history">;
     version: string;
     url: string;
     service: string;
     pushDate: number;
     _creationTime: number;
+    is_stable: boolean;
   };
   gitShaToCheck: string;
 }) {
   const compareCommits = useAction(api.github.compareCommits);
+  const markReleaseStability = useMutation(api.version_history.markReleaseStability);
   const prevDoc = useQuery(api.version_history.prevRev, {
     service: message.service,
     _creationTime: message._creationTime,
@@ -116,7 +120,7 @@ function Row({
   return (
     <div className="flex gap-2 items-center">
       <div className="w-[10%]">{comparison}</div>
-      <div className="flex flex-col w-[50%]">
+      <div className="flex flex-col w-[45%]">
         <span>
           <a
             className="underline text-blue-800 visited:text-purple-800"
@@ -134,10 +138,20 @@ function Row({
           </a>
         </span>
       </div>
-      <div className="w-[20%]">{service}</div>
+      <div className="w-[15%]">{service}</div>
       <div className="w-[20%] flex flex-col">
         <PushTime d={new Date(message.pushDate)} />
         <Ago d={d} />
+      </div>
+      <div className="w-[10%] flex items-center justify-center">
+        <input
+          type="checkbox"
+          checked={message.is_stable}
+          onChange={(e) =>
+            markReleaseStability({ service: message.service, version: message.version, is_stable: e.target.checked })
+          }
+          title={message.is_stable ? "Stable" : "Unstable"}
+        />
       </div>
     </div>
   );
@@ -241,6 +255,13 @@ function Rows() {
       )}
       <div>🥱 - It's been over a week</div>
       <div className="flex flex-col p-4 divide-y gap-2">
+        <div className="flex gap-2 items-center font-bold text-sm text-gray-600 pb-2">
+          <div className="w-[10%]">Status</div>
+          <div className="w-[45%]">Version</div>
+          <div className="w-[15%]">Service</div>
+          <div className="w-[20%]">Pushed</div>
+          <div className="w-[10%] text-center">Stable</div>
+        </div>
         {pushes.map((message) => (
           <Row
             key={JSON.stringify(message)}
