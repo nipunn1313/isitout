@@ -17,7 +17,7 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
-import { CheckIcon } from "@radix-ui/react-icons";
+import { CheckIcon, InfoCircledIcon } from "@radix-ui/react-icons";
 import {
   Tooltip,
   TooltipContent,
@@ -260,7 +260,19 @@ function Rows() {
           <div className="w-[45%]">Version</div>
           <div className="w-[15%]">Service</div>
           <div className="w-[20%]">Pushed</div>
-          <div className="w-[10%] text-center">Stable</div>
+          <div className="w-[10%] flex items-center justify-center gap-1">
+            <span>Stable</span>
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <InfoCircledIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Versions default to stable and can be manually marked as unstable if there is a bug.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
         {pushes.map((message) => (
           <Row
