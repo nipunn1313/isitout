@@ -25,7 +25,11 @@ export const addRow = mutation({
     if (currRow?.version === version) {
       return;
     }
-    await ctx.db.insert("version_history", { service, version });
+    await ctx.db.insert("version_history", {
+      service,
+      version,
+      is_stable: true,
+    });
   },
 });
 
@@ -55,19 +59,21 @@ export const services = query({
 });
 
 const renderedVersionHistoryRow = v.object({
+  _id: v.id("version_history"),
   _creationTime: v.number(),
   service: v.string(),
   version: v.string(),
   url: v.string(),
   buildDate: v.number(),
   pushDate: v.number(),
+  is_stable: v.boolean(),
 });
 
 export const list = query({
   args: { service: v.optional(v.string()) },
   returns: v.array(renderedVersionHistoryRow),
   handler: async (ctx, { service }) => {
-    checkIdentity(ctx);
+    await checkIdentity(ctx);
     let queryResult;
     if (service) {
       queryResult = await ctx.db
@@ -105,12 +111,14 @@ function renderVersionHistoryRow(row: Doc<"version_history">) {
 
   const pushDate = row._creationTime;
   return {
+    _id: row._id,
     _creationTime: row._creationTime,
     service: row.service,
     version: row.version,
     url,
     buildDate,
     pushDate,
+    is_stable: row.is_stable ?? true,
   };
 }
 
@@ -127,7 +135,7 @@ export const listLatest = query({
           .order("desc")
           .first();
         return renderVersionHistoryRow(row!);
-      }),
+      })
     );
     // Sort by pushDate descending.
     result.sort((a, b) => b.pushDate - a.pushDate);
@@ -144,10 +152,56 @@ export const prevRev = query({
     return ctx.db
       .query("version_history")
       .withIndex("by_service", (q) =>
-        q.eq("service", args.service).lt("_creationTime", args._creationTime),
+        q.eq("service", args.service).lt("_creationTime", args._creationTime)
       )
       .order("desc")
       .first();
+  },
+});
+
+export const latestStableReleaseForBiz = query({
+  args: {
+    service: v.string(),
+  },
+  returns: v.union(v.null(), v.string()),
+  handler: async (ctx, args) => {
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const release = await ctx.db
+      .query("version_history")
+      .withIndex("by_service_and_is_stable", (q) =>
+        q
+          .eq("service", args.service)
+          .eq("is_stable", true)
+          .lte("_creationTime", sevenDaysAgo)
+      )
+      .order("desc")
+      .first();
+
+    return release?.version;
+  },
+});
+
+export const markReleaseStability = mutation({
+  args: {
+    service: v.string(),
+    version: v.string(),
+    is_stable: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await checkIdentity(ctx);
+
+    const release = await ctx.db
+      .query("version_history")
+      .withIndex("by_service_and_version", (q) =>
+        q.eq("service", args.service).eq("version", args.version)
+      )
+      .order("desc")
+      .first();
+
+    if (release) {
+      await ctx.db.patch(release._id, { is_stable: args.is_stable });
+    }
   },
 });
 
