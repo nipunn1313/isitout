@@ -26,7 +26,9 @@ last_error = None
 try:
     result = subprocess.run(
         [
-            os.path.expanduser("~/.local/bin/poetry"),
+            "/home/nipunn/.pyenv/shims/python",
+            "-m",
+            "uv",
             "run",
             "services",
         ],
@@ -37,6 +39,7 @@ try:
 except subprocess.CalledProcessError as e:
     sys.stdout.buffer.write(e.stdout)
     sys.stdout.buffer.write(e.stderr)
+    raise
 
 builder_services = result.stdout.decode("utf-8").splitlines()
 
@@ -44,7 +47,9 @@ for service in builder_services:
     try:
         result = subprocess.run(
             [
-                os.path.expanduser("~/.local/bin/poetry"),
+                "/home/nipunn/.pyenv/shims/python",
+                "-m",
+                "uv",
                 "run",
                 "current-version",
                 service,
