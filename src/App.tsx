@@ -56,6 +56,20 @@ function Ago({ d }: { d: Date }) {
   );
 }
 
+function ReleaseTagBadge({ tag }: { tag: string }) {
+  const colorClasses: Record<string, string> = {
+    default: "bg-blue-100 text-blue-800",
+    biz: "bg-green-100 text-green-800",
+  };
+  const classes = colorClasses[tag] ?? "bg-gray-100 text-gray-800";
+
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${classes}`}>
+      {tag}
+    </span>
+  );
+}
+
 function Row({
   message,
   gitShaToCheck,
@@ -65,6 +79,7 @@ function Row({
     version: string;
     url: string;
     service: string;
+    release_tag: string;
     pushDate: number;
     _creationTime: number;
     is_stable: boolean;
@@ -72,7 +87,9 @@ function Row({
   gitShaToCheck: string;
 }) {
   const compareCommits = useAction(api.github.compareCommits);
-  const markReleaseStability = useMutation(api.version_history.markReleaseStability);
+  const markReleaseStability = useMutation(
+    api.version_history.markReleaseStability,
+  );
   const prevDoc = useQuery(api.version_history.prevRev, {
     service: message.service,
     _creationTime: message._creationTime,
@@ -120,7 +137,7 @@ function Row({
   return (
     <div className="flex gap-2 items-center">
       <div className="w-[10%]">{comparison}</div>
-      <div className="flex flex-col w-[45%]">
+      <div className="flex flex-col w-[35%]">
         <span>
           <a
             className="underline text-blue-800 visited:text-purple-800"
@@ -138,6 +155,9 @@ function Row({
           </a>
         </span>
       </div>
+      <div className="w-[10%]">
+        <ReleaseTagBadge tag={message.release_tag} />
+      </div>
       <div className="w-[15%]">{service}</div>
       <div className="w-[20%] flex flex-col">
         <PushTime d={new Date(message.pushDate)} />
@@ -148,7 +168,11 @@ function Row({
           type="checkbox"
           checked={message.is_stable}
           onChange={(e) =>
-            markReleaseStability({ service: message.service, version: message.version, is_stable: e.target.checked })
+            markReleaseStability({
+              service: message.service,
+              version: message.version,
+              is_stable: e.target.checked,
+            })
           }
           title={message.is_stable ? "Stable" : "Unstable"}
         />
@@ -257,7 +281,8 @@ function Rows() {
       <div className="flex flex-col p-4 divide-y gap-2">
         <div className="flex gap-2 items-center font-bold text-sm text-gray-600 pb-2">
           <div className="w-[10%]">Status</div>
-          <div className="w-[45%]">Version</div>
+          <div className="w-[35%]">Version</div>
+          <div className="w-[10%]">Tag</div>
           <div className="w-[15%]">Service</div>
           <div className="w-[20%]">Pushed</div>
           <div className="w-[10%] flex items-center justify-center gap-1">
@@ -268,7 +293,10 @@ function Rows() {
                   <InfoCircledIcon className="h-4 w-4 text-gray-400 hover:text-gray-600" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
-                  <p>Versions default to stable and can be manually marked as unstable if there is a bug.</p>
+                  <p>
+                    Versions default to stable and can be manually marked as
+                    unstable if there is a bug.
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

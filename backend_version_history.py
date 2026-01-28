@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import sys
@@ -47,6 +48,8 @@ for service in builder_services:
                 "run",
                 "current-version",
                 service,
+                "--all-tags",
+                "--json",
             ],
             cwd=os.path.expanduser("~/src/convex/ops/builder"),
             capture_output=True,
@@ -60,21 +63,30 @@ for service in builder_services:
         last_error = e
         continue
 
-    line = result.stdout.decode("utf-8").strip()
-    if not line or line == "unknown":
-        continue
-    version = line.split(" ")[0]
-    if not version or version == "unknown":
+    output = result.stdout.decode("utf-8").strip()
+    if not output or output == "unknown":
         continue
 
-    convex_client.mutation(
-        "version_history:addRow",
-        {
-            "version": version,
-            "service": service,
-            "secret": SECRET,
-        },
-    )
+    try:
+        tags_data = json.loads(output)
+    except json.JSONDecodeError:
+        print(f"Failed to parse JSON for service {service}: {output}")
+        continue
+
+    for release_tag, tag_info in tags_data.items():
+        version = tag_info.get("version")
+        if not version or version == "unknown":
+            continue
+
+        convex_client.mutation(
+            "version_history:addRow",
+            {
+                "version": version,
+                "service": service,
+                "release_tag": release_tag,
+                "secret": SECRET,
+            },
+        )
 
 if last_error:
     raise last_error
