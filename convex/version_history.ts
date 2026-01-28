@@ -10,16 +10,20 @@ export const addRow = mutation({
   args: {
     version: v.string(),
     service: v.string(),
+    release_tag: v.optional(v.string()),
     secret: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, { version, service, secret }) => {
+  handler: async (ctx, { version, service, release_tag, secret }) => {
     if (secret !== expectedSecret) {
       throw new Error("bad credentials");
     }
+    const tag = release_tag ?? "default";
     const currRow = await ctx.db
       .query("version_history")
-      .withIndex("by_service", (q) => q.eq("service", service))
+      .withIndex("by_service_and_release_tag", (q) =>
+        q.eq("service", service).eq("release_tag", tag),
+      )
       .order("desc")
       .first();
     if (currRow?.version === version) {
@@ -28,6 +32,7 @@ export const addRow = mutation({
     await ctx.db.insert("version_history", {
       service,
       version,
+      release_tag: tag,
       is_stable: true,
     });
   },
@@ -63,6 +68,7 @@ const renderedVersionHistoryRow = v.object({
   _creationTime: v.number(),
   service: v.string(),
   version: v.string(),
+  release_tag: v.string(),
   url: v.string(),
   buildDate: v.number(),
   pushDate: v.number(),
@@ -115,6 +121,7 @@ function renderVersionHistoryRow(row: Doc<"version_history">) {
     _creationTime: row._creationTime,
     service: row.service,
     version: row.version,
+    release_tag: row.release_tag ?? "default",
     url,
     buildDate,
     pushDate,
@@ -127,19 +134,45 @@ export const listLatest = query({
   returns: v.array(renderedVersionHistoryRow),
   handler: async (ctx) => {
     const services = await listServices(ctx);
-    const result = await Promise.all(
-      Object.entries(services).map(async ([service, _creationTime]) => {
+    const allowedTags = ["default", "biz"];
+    const results: ReturnType<typeof renderVersionHistoryRow>[] = [];
+
+    for (const [service] of Object.entries(services)) {
+      let hasCurrentDefault = false;
+
+      for (const tag of allowedTags) {
         const row = await ctx.db
           .query("version_history")
-          .withIndex("by_service", (q) => q.eq("service", service))
+          .withIndex("by_service_and_release_tag", (q) =>
+            q.eq("service", service).eq("release_tag", tag),
+          )
           .order("desc")
           .first();
-        return renderVersionHistoryRow(row!);
-      })
-    );
+        if (row) {
+          results.push(renderVersionHistoryRow(row));
+          if (tag === "default") {
+            hasCurrentDefault = true;
+          }
+        }
+      }
+      // Only include legacy rows if no current "default" row exists
+      if (!hasCurrentDefault) {
+        const legacyRow = await ctx.db
+          .query("version_history")
+          .withIndex("by_service_and_release_tag", (q) =>
+            q.eq("service", service).eq("release_tag", undefined),
+          )
+          .order("desc")
+          .first();
+        if (legacyRow) {
+          results.push(renderVersionHistoryRow(legacyRow));
+        }
+      }
+    }
+
     // Sort by pushDate descending.
-    result.sort((a, b) => b.pushDate - a.pushDate);
-    return result;
+    results.sort((a, b) => b.pushDate - a.pushDate);
+    return results;
   },
 });
 
@@ -152,7 +185,7 @@ export const prevRev = query({
     return ctx.db
       .query("version_history")
       .withIndex("by_service", (q) =>
-        q.eq("service", args.service).lt("_creationTime", args._creationTime)
+        q.eq("service", args.service).lt("_creationTime", args._creationTime),
       )
       .order("desc")
       .first();
@@ -168,11 +201,12 @@ export const latestStableReleaseForBiz = query({
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const release = await ctx.db
       .query("version_history")
-      .withIndex("by_service_and_is_stable", (q) =>
+      .withIndex("by_service_release_tag_and_is_stable", (q) =>
         q
           .eq("service", args.service)
+          .eq("release_tag", "default")
           .eq("is_stable", true)
-          .lte("_creationTime", sevenDaysAgo)
+          .lte("_creationTime", sevenDaysAgo),
       )
       .order("desc")
       .first();
@@ -191,15 +225,16 @@ export const markReleaseStability = mutation({
   handler: async (ctx, args) => {
     await checkIdentity(ctx);
 
-    const release = await ctx.db
+    // Find all releases with the same service and version (across all release tags)
+    const releases = await ctx.db
       .query("version_history")
       .withIndex("by_service_and_version", (q) =>
-        q.eq("service", args.service).eq("version", args.version)
+        q.eq("service", args.service).eq("version", args.version),
       )
-      .order("desc")
-      .first();
+      .collect();
 
-    if (release) {
+    // Update stability for all matching releases
+    for (const release of releases) {
       await ctx.db.patch(release._id, { is_stable: args.is_stable });
     }
   },
