@@ -153,6 +153,12 @@ function Row({
           >
             diff previous
           </a>
+          <a
+            className="underline text-primary text-xs"
+            href={`https://github.com/get-convex/convex/compare/${service}/${version}...main`}
+          >
+            diff main
+          </a>
         </span>
       </div>
       <div className="w-[10%]">
