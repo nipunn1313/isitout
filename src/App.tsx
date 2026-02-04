@@ -92,6 +92,7 @@ function Row({
   );
   const prevDoc = useQuery(api.version_history.prevRev, {
     service: message.service,
+    release_tag: message.release_tag,
     _creationTime: message._creationTime,
   });
   const [comparison, setComparison] = useState("");
@@ -284,6 +285,11 @@ function Rows() {
         </>
       )}
       <div>🥱 - It's been over a week</div>
+      {!displayLatestOnly && (
+        <p className="text-sm text-gray-500 ml-4 mt-2">
+          Note: Only the 20 most recently pushed versions are displayed.
+        </p>
+      )}
       <div className="flex flex-col p-4 divide-y gap-2">
         <div className="flex gap-2 items-center font-bold text-sm text-gray-600 pb-2">
           <div className="w-[10%]">Status</div>

@@ -86,12 +86,12 @@ export const list = query({
         .query("version_history")
         .withIndex("by_service", (q) => q.eq("service", service))
         .order("desc")
-        .collect();
+        .take(20);
     } else {
       queryResult = await ctx.db
         .query("version_history")
         .order("desc")
-        .collect();
+        .take(20);
     }
     const result = queryResult.map(renderVersionHistoryRow);
     return result;
@@ -179,13 +179,17 @@ export const listLatest = query({
 export const prevRev = query({
   args: {
     service: v.string(),
+    release_tag: v.string(),
     _creationTime: v.number(),
   },
   handler: async (ctx, args) => {
     return ctx.db
       .query("version_history")
-      .withIndex("by_service", (q) =>
-        q.eq("service", args.service).lt("_creationTime", args._creationTime),
+      .withIndex("by_service_and_release_tag", (q) =>
+        q
+          .eq("service", args.service)
+          .eq("release_tag", args.release_tag)
+          .lt("_creationTime", args._creationTime),
       )
       .order("desc")
       .first();
