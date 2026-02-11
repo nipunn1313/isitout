@@ -52,6 +52,7 @@ for service in builder_services:
                 "uv",
                 "run",
                 "current-version",
+                "--nomad-region-override=global",
                 service,
                 "--all-tags",
                 "--json",
