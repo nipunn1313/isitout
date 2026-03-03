@@ -202,7 +202,7 @@ export const latestStableReleaseForBiz = query({
   },
   returns: v.union(v.null(), v.string()),
   handler: async (ctx, args) => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
     const release = await ctx.db
       .query("version_history")
       .withIndex("by_service_release_tag_and_is_stable", (q) =>
@@ -210,7 +210,7 @@ export const latestStableReleaseForBiz = query({
           .eq("service", args.service)
           .eq("release_tag", "default")
           .eq("is_stable", true)
-          .lte("_creationTime", sevenDaysAgo),
+          .lte("_creationTime", twoDaysAgo),
       )
       .order("desc")
       .first();
