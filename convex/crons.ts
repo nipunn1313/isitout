@@ -17,9 +17,9 @@ crons.interval(
 );
 
 crons.interval(
-  "track branch revs",
+  "fetch deployed versions",
   { minutes: 1 },
-  internal.github.trackBranchRevs,
+  internal.versions.fetchDeployedVersions,
 );
 
 export default crons;
