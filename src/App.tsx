@@ -349,10 +349,10 @@ export default function App() {
       <Rows />
       <div>
         <a
-          href="https://github.com/nipunn1313/isitout"
+          href="https://github.com/get-convex/isitout"
           className="underline text-blue-800 visited:text-purple-800"
         >
-          https://github.com/nipunn1313/isitout
+          https://github.com/get-convex/isitout
         </a>
       </div>
     </main>
