@@ -47,6 +47,13 @@ function isStale(d: Date): boolean {
   return Date.now() - d.valueOf() >= STALE_AGE_MILLIS;
 }
 
+function gitRefFor(service: string, version: string): string {
+  if (service === "convex-js") {
+    return `npm/${version.split("-")[0]}`;
+  }
+  return `${service}/${version}`;
+}
+
 function Ago({ d }: { d: Date }) {
   return (
     <div className="ago">
@@ -101,7 +108,10 @@ function Row({
 
   const service = message.service;
   const version = message.version;
-  const base = version.split("-").pop()!;
+  const base =
+    service === "convex-js"
+      ? gitRefFor(service, version)
+      : version.split("-").pop()!;
 
   const prev = prevDoc?.version || "";
 
@@ -150,13 +160,13 @@ function Row({
         <span>
           <a
             className="underline text-primary text-xs"
-            href={`https://github.com/get-convex/convex/compare/${service}/${prev}...get-convex:convex:${service}/${version}`}
+            href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, prev)}...get-convex:convex:${gitRefFor(service, version)}`}
           >
             diff previous
           </a>
           <a
             className="underline text-primary text-xs"
-            href={`https://github.com/get-convex/convex/compare/${service}/${version}...main`}
+            href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, version)}...main`}
           >
             diff main
           </a>
