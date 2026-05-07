@@ -83,22 +83,35 @@ export const getLatestConvexJsRelease = internalAction({
       repo: "convex",
       ref: "tags/npm/",
     });
-    const re = /^refs\/tags\/(npm\/\d+\.\d+\.\d+)$/;
+    const re = /^refs\/tags\/npm\/(\d+\.\d+\.\d+)$/;
     const versions = data
-      .map((r) => r.ref.match(re)?.[1])
-      .filter((v): v is string => !!v)
-      .map(
-        (v) =>
-          v.slice("npm/".length).split(".").map(Number) as [
-            number,
-            number,
-            number,
-          ],
-      )
-      .sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+      .flatMap((r) => {
+        const versionMatch = r.ref.match(re);
+        if (!versionMatch) {
+          return [];
+        }
+
+        const versionStr = versionMatch[1];
+
+        return [
+          {
+            commit: r.object.sha,
+            versionStr,
+            version: versionStr.split(".").map(Number) as [
+              number,
+              number,
+              number,
+            ],
+          },
+        ];
+      })
+      .sort(
+        ({ version: a }, { version: b }) =>
+          a[0] - b[0] || a[1] - b[1] || a[2] - b[2],
+      );
     const latest = versions.at(-1);
     if (!latest) throw new Error("No npm/x.y.z tag found");
-    return latest.join(".");
+    return `${latest.versionStr}-${latest.commit.slice(0, 7)}`;
   },
 });
 
