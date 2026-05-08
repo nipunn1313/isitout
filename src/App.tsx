@@ -164,6 +164,7 @@ function Row({
           >
             diff previous
           </a>
+          {" "}
           <a
             className="underline text-primary text-xs"
             href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, version)}...main`}
