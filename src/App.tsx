@@ -143,7 +143,7 @@ function Row({
       setComparison(getComparisonEmoji());
     };
     void fetchData();
-  }, [compareCommits, gitShaToCheck]);
+  }, [compareCommits, gitShaToCheck, base, service]);
 
   return (
     <div className="flex gap-2 items-center">
@@ -163,8 +163,7 @@ function Row({
             href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, prev)}...get-convex:convex:${gitRefFor(service, version)}`}
           >
             diff previous
-          </a>
-          {" "}
+          </a>{" "}
           <a
             className="underline text-primary text-xs"
             href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, version)}...main`}
@@ -204,6 +203,8 @@ function Rows() {
   const [latestOnly, setLatestOnly] = useState(true);
   const displayLatestOnly = latestOnly && value === "all";
   const [gitShaToCheck, setGitShaToCheck] = useState("");
+  const [shaError, setShaError] = useState<string | null>(null);
+  const validateSha = useAction(api.github.validateSha);
   const serviceToLastPushed = useQuery(api.version_history.services) || [];
   const messages =
     useQuery(api.version_history.list, {
@@ -217,6 +218,24 @@ function Rows() {
   ) => {
     setGitShaToCheck(event.target.value);
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    setShaError(null);
+    if (!gitShaToCheck) return;
+    void (async () => {
+      const result = await validateSha({ sha: gitShaToCheck });
+      if (cancelled) return;
+      if (!result.valid) {
+        setShaError(
+          `"${gitShaToCheck}" was not found in get-convex/convex on GitHub.`,
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [gitShaToCheck, validateSha]);
 
   const anyStale = Object.values(serviceToLastPushed).some((lastPushed) =>
     isStale(new Date(lastPushed)),
@@ -281,14 +300,21 @@ function Rows() {
             Latest only
           </div>
         )}
-        <Input
-          className="max-w-56"
-          onChange={handleInputChange}
-          value={gitShaToCheck}
-          placeholder="Paste git SHA here"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            className={`max-w-56 ${shaError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+            onChange={handleInputChange}
+            value={gitShaToCheck}
+            placeholder="Paste git SHA here"
+          />
+          {shaError && (
+            <span className="text-red-600 text-sm font-medium" title={shaError}>
+              ⚠️ Invalid git SHA
+            </span>
+          )}
+        </div>
       </div>
-      {gitShaToCheck && (
+      {gitShaToCheck && !shaError && (
         <>
           <div>✅ - It's out!</div>
           <div>❌ - It's not out!</div>

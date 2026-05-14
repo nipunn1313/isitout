@@ -38,6 +38,22 @@ export const compareCommits = action({
   },
 });
 
+export const validateSha = action({
+  args: { sha: v.string() },
+  handler: async (_ctx, args) => {
+    try {
+      await octokit.repos.getCommit({
+        owner: "get-convex",
+        repo: "convex",
+        ref: args.sha,
+      });
+      return { valid: true as const };
+    } catch (e) {
+      return { valid: false as const, error: (e as Error).message };
+    }
+  },
+});
+
 export const getLatestConvexBackendRelease = internalAction({
   args: {},
   handler: async (_ctx, _args) => {
