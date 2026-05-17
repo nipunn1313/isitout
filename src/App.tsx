@@ -203,8 +203,47 @@ function Rows() {
   const [latestOnly, setLatestOnly] = useState(true);
   const displayLatestOnly = latestOnly && value === "all";
   const [gitShaToCheck, setGitShaToCheck] = useState("");
-  const [shaError, setShaError] = useState<string | null>(null);
-  const validateSha = useAction(api.github.validateSha);
+  const resolveRef = useAction(api.github.resolveRef);
+  const [resolved, setResolved] = useState<{
+    sha: string;
+    title: string;
+    authorName: string;
+    authorAvatarUrl: string | null;
+    authorProfileUrl: string | null;
+    htmlUrl: string;
+    prNumber: number | null;
+  } | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  const [resolving, setResolving] = useState(false);
+  useEffect(() => {
+    const input = gitShaToCheck.trim();
+    setResolved(null);
+    setResolveError(null);
+    if (!input) {
+      setResolving(false);
+      return;
+    }
+    setResolving(true);
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void resolveRef({ input }).then((res) => {
+        if (cancelled) return;
+        setResolving(false);
+        if (res.kind === "ok") {
+          setResolved(res);
+          setResolveError(null);
+        } else {
+          setResolved(null);
+          setResolveError(res.message);
+        }
+      });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [gitShaToCheck, resolveRef]);
+  const effectiveSha = resolved?.sha ?? "";
   const serviceToLastPushed = useQuery(api.version_history.services) || [];
   const messages =
     useQuery(api.version_history.list, {
@@ -219,31 +258,13 @@ function Rows() {
     setGitShaToCheck(event.target.value);
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    setShaError(null);
-    if (!gitShaToCheck) return;
-    void (async () => {
-      const result = await validateSha({ sha: gitShaToCheck });
-      if (cancelled) return;
-      if (!result.valid) {
-        setShaError(
-          `"${gitShaToCheck}" was not found in get-convex/convex on GitHub.`,
-        );
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [gitShaToCheck, validateSha]);
-
   const anyStale = Object.values(serviceToLastPushed).some((lastPushed) =>
     isStale(new Date(lastPushed)),
   );
 
   return (
     <div className="max-w-[1600px] w-full">
-      <div className="flex ml-4 gap-4 p-4 flex-grow-0 flex-shrink">
+      <div className="flex ml-4 gap-4 p-4 flex-grow-0 flex-shrink items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
@@ -300,21 +321,81 @@ function Rows() {
             Latest only
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <Input
-            className={`max-w-56 ${shaError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-            onChange={handleInputChange}
-            value={gitShaToCheck}
-            placeholder="Paste git SHA here"
-          />
-          {shaError && (
-            <span className="text-red-600 text-sm font-medium" title={shaError}>
-              ⚠️ Invalid git SHA
-            </span>
-          )}
-        </div>
+        <Input
+          className={`max-w-56 ${resolveError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+          onChange={handleInputChange}
+          value={gitShaToCheck}
+          placeholder="Paste git SHA or PR #/URL"
+        />
+        {resolveError && (
+          <p className="text-sm text-red-600">{resolveError}</p>
+        )}
+        {resolving && (
+          <div className="flex items-center gap-2 text-sm min-w-0 animate-pulse">
+            <span className="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0" />
+            <span className="h-3 w-20 rounded bg-gray-200 flex-shrink-0" />
+            <span className="h-3 w-64 rounded bg-gray-200" />
+          </div>
+        )}
+        {!resolving && resolved && (() => {
+          const trailingPr = resolved.title.match(/^(.*?)\s*\(#(\d+)\)\s*$/);
+          const titleWithoutTag = trailingPr ? trailingPr[1] : resolved.title;
+          const linkedPrNumber = resolved.prNumber ?? (trailingPr ? Number(trailingPr[2]) : null);
+          return (
+            <div className="flex items-center gap-2 text-sm min-w-0">
+              {resolved.authorProfileUrl ? (
+                <a
+                  href={resolved.authorProfileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 flex-shrink-0 group"
+                >
+                  {resolved.authorAvatarUrl && (
+                    <img
+                      src={resolved.authorAvatarUrl}
+                      alt={resolved.authorName}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  )}
+                  <span className="font-medium group-hover:underline">
+                    {resolved.authorName}
+                  </span>
+                </a>
+              ) : (
+                <span className="font-medium flex-shrink-0">
+                  {resolved.authorName}
+                </span>
+              )}
+              <span className="text-gray-600 truncate">
+                <a
+                  href={resolved.htmlUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:underline"
+                >
+                  {titleWithoutTag}
+                </a>
+                {linkedPrNumber && (
+                  <>
+                    {" "}
+                    (
+                    <a
+                      href={`https://github.com/get-convex/convex/pull/${linkedPrNumber}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      #{linkedPrNumber}
+                    </a>
+                    )
+                  </>
+                )}
+              </span>
+            </div>
+          );
+        })()}
       </div>
-      {gitShaToCheck && !shaError && (
+      {gitShaToCheck && !resolveError && (
         <>
           <div>✅ - It's out!</div>
           <div>❌ - It's not out!</div>
@@ -355,7 +436,7 @@ function Rows() {
           <Row
             key={JSON.stringify(message)}
             message={message}
-            gitShaToCheck={gitShaToCheck}
+            gitShaToCheck={effectiveSha}
           />
         ))}
       </div>

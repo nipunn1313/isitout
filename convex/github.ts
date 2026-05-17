@@ -11,7 +11,11 @@ export const compareCommits = action({
     head: v.string(),
     service: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
     if (args.service === "self-hosted" || args.service === "local-dev") {
       // Get the base commit. Then extract the git origin revid from the commit message.
       // It looks something like this GitOrigin-RevId: 2aa20649ba78df338cfae387a99f3e581f1d8e72
@@ -38,18 +42,71 @@ export const compareCommits = action({
   },
 });
 
-export const validateSha = action({
-  args: { sha: v.string() },
-  handler: async (_ctx, args) => {
+async function fetchCommit(sha: string, prNumber?: number) {
+  const { data } = await octokit.repos.getCommit({
+    owner: "get-convex",
+    repo: "convex",
+    ref: sha,
+  });
+  return {
+    kind: "ok" as const,
+    sha: data.sha,
+    title: data.commit.message.split("\n")[0],
+    authorName:
+      data.author?.login ?? data.commit.author?.name ?? "unknown",
+    authorAvatarUrl: data.author?.avatar_url ?? null,
+    authorProfileUrl: data.author?.html_url ?? null,
+    htmlUrl: data.html_url,
+    prNumber: prNumber ?? null,
+  };
+}
+
+export const resolveRef = action({
+  args: { input: v.string() },
+  handler: async (ctx, { input }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    const trimmed = input.trim();
+    if (!trimmed) {
+      return { kind: "error" as const, message: "Empty input." };
+    }
+    const explicitPr = trimmed.match(/^#(\d+)$/);
+    const bareDigits = /^\d{1,6}$/.test(trimmed) ? trimmed : null;
+    const urlPr = trimmed.match(
+      /^https?:\/\/github\.com\/get-convex\/convex\/pull\/(\d+)(?:[/?#].*)?$/,
+    );
+    const prNumberStr = explicitPr?.[1] ?? urlPr?.[1] ?? bareDigits;
+    if (prNumberStr) {
+      const number = Number(prNumberStr);
+      try {
+        const pr = await octokit.pulls.get({
+          owner: "get-convex",
+          repo: "convex",
+          pull_number: number,
+        });
+        if (!pr.data.merged || !pr.data.merge_commit_sha) {
+          return {
+            kind: "error" as const,
+            message: `PR #${number} is not merged.`,
+          };
+        }
+        return await fetchCommit(pr.data.merge_commit_sha, number);
+      } catch {
+        return {
+          kind: "error" as const,
+          message: `PR #${number} not found in get-convex/convex.`,
+        };
+      }
+    }
     try {
-      await octokit.repos.getCommit({
-        owner: "get-convex",
-        repo: "convex",
-        ref: args.sha,
-      });
-      return { valid: true as const };
-    } catch (e) {
-      return { valid: false as const, error: (e as Error).message };
+      return await fetchCommit(trimmed);
+    } catch {
+      return {
+        kind: "error" as const,
+        message: "Commit not found in get-convex/convex.",
+      };
     }
   },
 });
