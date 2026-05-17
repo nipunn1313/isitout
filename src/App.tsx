@@ -328,6 +328,9 @@ function Rows() {
           value={gitShaToCheck}
           placeholder="Paste git SHA or PR #/URL"
         />
+        {resolveError && (
+          <p className="text-sm text-red-600">{resolveError}</p>
+        )}
         {resolving && (
           <div className="flex items-center gap-2 text-sm min-w-0 animate-pulse">
             <span className="w-5 h-5 rounded-full bg-gray-200 flex-shrink-0" />
@@ -393,9 +396,6 @@ function Rows() {
           );
         })()}
       </div>
-      {resolveError && (
-        <p className="text-sm text-red-600 ml-4 px-4">{resolveError}</p>
-      )}
       {gitShaToCheck && (
         <>
           <div>✅ - It's out!</div>
