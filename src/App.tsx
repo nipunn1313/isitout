@@ -143,7 +143,7 @@ function Row({
       setComparison(getComparisonEmoji());
     };
     void fetchData();
-  }, [compareCommits, gitShaToCheck]);
+  }, [compareCommits, gitShaToCheck, base, service]);
 
   return (
     <div className="flex gap-2 items-center">
@@ -163,8 +163,7 @@ function Row({
             href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, prev)}...get-convex:convex:${gitRefFor(service, version)}`}
           >
             diff previous
-          </a>
-          {" "}
+          </a>{" "}
           <a
             className="underline text-primary text-xs"
             href={`https://github.com/get-convex/convex/compare/${gitRefFor(service, version)}...main`}
@@ -323,7 +322,7 @@ function Rows() {
           </div>
         )}
         <Input
-          className="max-w-56"
+          className={`max-w-56 ${resolveError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
           onChange={handleInputChange}
           value={gitShaToCheck}
           placeholder="Paste git SHA or PR #/URL"
@@ -396,7 +395,7 @@ function Rows() {
           );
         })()}
       </div>
-      {gitShaToCheck && (
+      {gitShaToCheck && !resolveError && (
         <>
           <div>✅ - It's out!</div>
           <div>❌ - It's not out!</div>
