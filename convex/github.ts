@@ -73,7 +73,10 @@ export const resolveRef = action({
     }
     const explicitPr = trimmed.match(/^#(\d+)$/);
     const bareDigits = /^\d{1,6}$/.test(trimmed) ? trimmed : null;
-    const prNumberStr = explicitPr?.[1] ?? bareDigits;
+    const urlPr = trimmed.match(
+      /^https?:\/\/github\.com\/get-convex\/convex\/pull\/(\d+)(?:[/?#].*)?$/,
+    );
+    const prNumberStr = explicitPr?.[1] ?? urlPr?.[1] ?? bareDigits;
     if (prNumberStr) {
       const number = Number(prNumberStr);
       try {
