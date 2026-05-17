@@ -38,6 +38,67 @@ export const compareCommits = action({
   },
 });
 
+async function fetchCommit(sha: string, prNumber?: number) {
+  const { data } = await octokit.repos.getCommit({
+    owner: "get-convex",
+    repo: "convex",
+    ref: sha,
+  });
+  return {
+    kind: "ok" as const,
+    sha: data.sha,
+    title: data.commit.message.split("\n")[0],
+    authorName:
+      data.author?.login ?? data.commit.author?.name ?? "unknown",
+    authorAvatarUrl: data.author?.avatar_url ?? null,
+    htmlUrl: data.html_url,
+    prNumber: prNumber ?? null,
+  };
+}
+
+export const resolveRef = action({
+  args: { input: v.string() },
+  handler: async (_ctx, { input }) => {
+    const trimmed = input.trim();
+    if (!trimmed) {
+      return { kind: "error" as const, message: "Empty input." };
+    }
+    const explicitPr = trimmed.match(/^#(\d+)$/);
+    const bareDigits = /^\d{1,6}$/.test(trimmed) ? trimmed : null;
+    const prNumberStr = explicitPr?.[1] ?? bareDigits;
+    if (prNumberStr) {
+      const number = Number(prNumberStr);
+      try {
+        const pr = await octokit.pulls.get({
+          owner: "get-convex",
+          repo: "convex",
+          pull_number: number,
+        });
+        if (!pr.data.merged || !pr.data.merge_commit_sha) {
+          return {
+            kind: "error" as const,
+            message: `PR #${number} is not merged.`,
+          };
+        }
+        return await fetchCommit(pr.data.merge_commit_sha, number);
+      } catch {
+        return {
+          kind: "error" as const,
+          message: `PR #${number} not found in get-convex/convex.`,
+        };
+      }
+    }
+    try {
+      return await fetchCommit(trimmed);
+    } catch {
+      return {
+        kind: "error" as const,
+        message: "Commit not found in get-convex/convex.",
+      };
+    }
+  },
+});
+
 export const getLatestConvexBackendRelease = internalAction({
   args: {},
   handler: async (_ctx, _args) => {

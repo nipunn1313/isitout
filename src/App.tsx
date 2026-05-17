@@ -204,6 +204,42 @@ function Rows() {
   const [latestOnly, setLatestOnly] = useState(true);
   const displayLatestOnly = latestOnly && value === "all";
   const [gitShaToCheck, setGitShaToCheck] = useState("");
+  const resolveRef = useAction(api.github.resolveRef);
+  const [resolved, setResolved] = useState<{
+    sha: string;
+    title: string;
+    authorName: string;
+    authorAvatarUrl: string | null;
+    htmlUrl: string;
+    prNumber: number | null;
+  } | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
+  useEffect(() => {
+    const input = gitShaToCheck.trim();
+    if (!input) {
+      setResolved(null);
+      setResolveError(null);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      void resolveRef({ input }).then((res) => {
+        if (cancelled) return;
+        if (res.kind === "ok") {
+          setResolved(res);
+          setResolveError(null);
+        } else {
+          setResolved(null);
+          setResolveError(res.message);
+        }
+      });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [gitShaToCheck, resolveRef]);
+  const effectiveSha = resolved?.sha ?? "";
   const serviceToLastPushed = useQuery(api.version_history.services) || [];
   const messages =
     useQuery(api.version_history.list, {
@@ -285,9 +321,35 @@ function Rows() {
           className="max-w-56"
           onChange={handleInputChange}
           value={gitShaToCheck}
-          placeholder="Paste git SHA here"
+          placeholder="Paste git SHA or PR #"
         />
+        {resolved && (
+          <a
+            href={resolved.htmlUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 text-sm min-w-0"
+          >
+            {resolved.authorAvatarUrl && (
+              <img
+                src={resolved.authorAvatarUrl}
+                alt={resolved.authorName}
+                className="w-5 h-5 rounded-full flex-shrink-0"
+              />
+            )}
+            <span className="font-medium flex-shrink-0">
+              {resolved.authorName}
+            </span>
+            <span className="text-gray-600 truncate">
+              {resolved.prNumber ? `#${resolved.prNumber}: ` : ""}
+              {resolved.title}
+            </span>
+          </a>
+        )}
       </div>
+      {resolveError && (
+        <p className="text-sm text-red-600 ml-4">{resolveError}</p>
+      )}
       {gitShaToCheck && (
         <>
           <div>✅ - It's out!</div>
@@ -329,7 +391,7 @@ function Rows() {
           <Row
             key={JSON.stringify(message)}
             message={message}
-            gitShaToCheck={gitShaToCheck}
+            gitShaToCheck={effectiveSha}
           />
         ))}
       </div>
