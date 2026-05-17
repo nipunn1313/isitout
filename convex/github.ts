@@ -55,6 +55,7 @@ async function fetchCommit(sha: string, prNumber?: number) {
     authorName:
       data.author?.login ?? data.commit.author?.name ?? "unknown",
     authorAvatarUrl: data.author?.avatar_url ?? null,
+    authorProfileUrl: data.author?.html_url ?? null,
     htmlUrl: data.html_url,
     prNumber: prNumber ?? null,
   };
