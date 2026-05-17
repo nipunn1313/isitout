@@ -11,7 +11,11 @@ export const compareCommits = action({
     head: v.string(),
     service: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
     if (args.service === "self-hosted" || args.service === "local-dev") {
       // Get the base commit. Then extract the git origin revid from the commit message.
       // It looks something like this GitOrigin-RevId: 2aa20649ba78df338cfae387a99f3e581f1d8e72
@@ -58,7 +62,11 @@ async function fetchCommit(sha: string, prNumber?: number) {
 
 export const resolveRef = action({
   args: { input: v.string() },
-  handler: async (_ctx, { input }) => {
+  handler: async (ctx, { input }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
     const trimmed = input.trim();
     if (!trimmed) {
       return { kind: "error" as const, message: "Empty input." };
